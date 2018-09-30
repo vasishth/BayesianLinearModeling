@@ -1,0 +1,1381 @@
+# Foundational ideas
+
+
+## Introduction
+
+The basic idea we will explore in this course is
+Bayes' theorem, which, as Lunn et al 2012 
+put it, 
+allows us to learn from experience and turn a prior distribution into a posterior distribution, given data.
+
+A central departure from frequentist methodology is that the unknown population parameter is expressed as a random variable. For example, we can talk about how sure we are that the population parameter has a particular value, and this uncertainty is subjective. In the frequentist case, the unknown population parameter is a point value; in the frequentist world, you cannot talk about how sure you are that a parameter has value $\theta$.
+
+\textbf{Notational conventions}: A binomial distribution, $n$ trials each with probability $\theta$ of occurring, is written $Bi(\theta,n)$. Given a random variable with this distribution, we can write $R\mid \theta, n \sim Bi(\theta,n)$ or $p(r\mid \theta, n) = Bi(\theta,n)$, where $r$ is the realization of $R$. We can drop the conditioning in $R\mid \theta, n$, so that we can write: given $R\sim Bi(\theta,n)$, what is $Pr(\theta_1 < \theta < \theta_2\mid r, n)$.
+
+### Steps in Bayesian analysis
+
+\begin{enumerate}
+\item Given data, specify a \textbf{likelihood function}.
+\item Specify \textbf{prior distribution} for model parameters.
+\item Derive \textbf{posterior distribution} for parameters given likelihood function and prior density.
+\item
+Simulate parameters to get \textbf{samples from posterior distribution} of parameters.
+\item 
+Summarize parameter samples.
+\end{enumerate}
+
+### Comparison of Bayesian with frequentist methodology
+
+\begin{enumerate}
+\item In Bayesian data analysis (BDA), the unknown parameter is treated as if it's a random variable, but in reality we are just using a probability density function (pdf) to characterize our uncertainty about parameter values. In frequentist methods, the unknown parameter is a point value. 
+
+\item Frequentists want (and get) $P(data\mid parameters)$, whereas Bayesians want (and get) $P(parameters\mid data)$.
+
+What this means is that frequentists will set up a null hypothesis and then compute the probability of the data given the null (the p-value). The Bayesian obtains the probability of hypothesis of interest (or the null hypothesis) given the data.
+
+
+\item For frequentists, the probability of an event is defined in terms of (hypothetical) long run relative frequencies; so, one cannot talk about the probability of a single event. For Bayesians, a single event is associated with a probability and this probability is subjective: it depends on the observer's beliefs. An example is the familiar one: the probability of a heads in a coin toss. You believe that any coin you pull out of your pocket is fair; that's a subjective belief. 
+From the frequentist viewpoint, the 0.5 probability of a heads is a consequence of long-term relative frequencies under repeated coin tosses.
+\end{enumerate}
+
+
+### Statistics is the inverse of probability
+
+In probability, we are given a probability density or mass function f(x)  (see below), and parameters, and we can deduce the probability of one or more events occurring.
+
+In statistics, we are given a collection of events, and we want to discover the parameters that produced them (assuming f(x) is the pdf that generated the data). The classical frequentist approach is:
+
+\begin{enumerate}
+\item Estimate parameters assuming $X\sim f(x)$.
+\item Do inference.
+\end{enumerate}
+ 
+For example, for reaction times, we might assume a random variable $X_i$ that has a normal distribution $N(0,\sigma^2)$ (the null hypothesis) as its probability density function. We compute the most likely parameter value that generated the data, the mean of the random variable,\footnote{This is the maximum likelihood estimate.} and compute the probability of observing a value like the mean or something more extreme given the null hypothesis. We can write this statement in short-hand as $P(data\mid parameter)$.
+
+## Brief review of probability theory
+
+We begin with a review of basic probability theory.
+
+### Kolmogorov Axioms of Probability
+
+We assume here a basic knowledge of set theory.
+Let $S$ be a set of events. For example, for a single coin toss, $S=\{A_1,A_2\}$, where $A_1$ is the event that we get a  heads, and $A_2$ the event that we get a tails.
+
+\begin{enumerate}
+\item
+\textbf{Axiom 1}
+$(\mathbb{P}(A)\geq 0)$ for any event $(A\subset S)$.
+\item
+\textbf{Axiom 2}
+$(\mathbb{P}(S)=1)$.
+\item
+\textbf{Axiom 3}
+If the events $(A_{1}), (A_{2}), (A_{3})\dots$ are disjoint then
+
+
+\begin{equation}
+\mathbb{P}\left(\bigcup_{i=1}^{n}A_{i}\right)=\sum_{i=1}^{n}\mathbb{P}(A_{i})\mbox{ for every }n,
+\end{equation}
+
+and furthermore,
+
+\begin{equation}
+\mathbb{P}\left(\bigcup_{i=1}^{\infty}A_{i}\right)=\sum_{i=1}^{\infty}\mathbb{P}(A_{i}).
+\end{equation}
+\end{enumerate}
+
+#### Three important propositions
+
+**Proposition 1**
+
+Let $E\cup E^c=S$. Then,
+
+\begin{equation}
+1=P(S) = P(E \cup E^c) = P(E)+P(E^c)  
+\end{equation}
+
+or:
+
+\begin{equation}
+P(E^c) = 1-P(E)
+\end{equation}
+
+** Proposition 2** 
+
+If $E\subset F$ then $P(E)\leq P(F)$.  
+
+**Proposition 3**
+
+\begin{equation}
+P(E \cup F) = P(E)+P(F)-P(EF)  
+\end{equation}
+
+### Conditional Probability
+
+This is a central concept in this course.
+The conditional probability of event $B$ given event $A$, denoted $\mathbb{P}(B\mid A)$, is defined by
+
+\begin{equation}
+\mathbb{P}(B\mid A)=\frac{\mathbb{P}(A\cap B)}{\mathbb{P}(A)},\quad \mbox{if }\mathbb{P}(A)>0.
+\end{equation}
+
+** Theorem **
+
+For any fixed event $A$ with $\mathbb{P}(A)>0$,
+
+\begin{enumerate}
+\item $ \mathbb{P} (B|A)\geq 0 $, for all events $ B \subset S$,
+\item $ \mathbb{P} (S|A) = 1 $, and
+\item If $B_{1}$, $B_{2}$, $B_{3}$,... are disjoint events,
+\end{enumerate}
+
+  then:
+  
+  \begin{equation}
+  \mathbb{P}\left(\left.\bigcup_{k=1}^{\infty}B_{k}\:\right|A\right)=\sum_{k=1}^{\infty}\mathbb{P}(B_{k}|A).
+  \end{equation}
+
+In other words, $\mathbb{P}(\cdot|A)$ is a legitimate probability function. With this fact in mind, the following properties are immediate:
+
+For any events $A$, $B$, and $C$ with $\mathbb{P}(A)>0$,
+
+\begin{enumerate}
+\item $ \mathbb{P} ( B^{c} | A ) = 1 - \mathbb{P} (B|A).$
+\item If $B\subset C$ then $\mathbb{P}(B|A)\leq\mathbb{P}(C|A)$.
+\item $ \mathbb{P} [ ( B\cup C ) | A ] = \mathbb{P} (B|A) + \mathbb{P}(C|A) - \mathbb{P} [ (B \cap C|A) ].$
+\item The Multiplication Rule. For any two events $A$ and $B$,
+
+  \begin{equation}
+  \mathbb{P}(A\cap B)=\mathbb{P}(A)\mathbb{P}(B|A).\label{eq-multiplication-rule-short}
+  \end{equation}
+
+  And more generally, for events $A_{1}$, $A_{2}$, $A_{3}$,..., $A_{n}$,
+
+  \begin{equation}
+  \mathbb{P}(A_{1}\cap A_{2}\cap\cdots\cap A_{n})=\mathbb{P}(A_{1})\mathbb{P}(A_{2}|A_{1})\cdots\mathbb{P}(A_{n}|A_{1}\cap A_{2}\cap\cdots\cap A_{n-1}).\label{eq-multiplication-rule-long}
+  \end{equation}
+
+\end{enumerate}
+
+###Independence of events
+
+[Taken nearly verbatim from Kerns.]
+
+**Definition**
+
+Events A and B are said to be independent if 
+
+\begin{equation}
+\mathbb{P}(A\cap B)=\mathbb{P}(A)\mathbb{P}(B).
+\end{equation}
+
+Otherwise, the events are said to be dependent.
+
+From the above definition of conditional probability, 
+we know that when $\mathbb{P}(B)>0$ we may write
+
+\begin{equation}
+\mathbb{P}(A|B)=\frac{\mathbb{P}(A\cap B)}{\mathbb{P}(B)}.
+\end{equation}
+
+In the case that A and B are independent, the numerator of the fraction factors so that $\mathbb{P}(B)$ cancels, with the result:
+
+\begin{equation}
+\mathbb{P}(A|B)=\mathbb{P}(A)\mbox{ when $A$, $B$ are independent.}
+\end{equation}
+
+**Proposition**
+
+If E and F are independent events, then so are E and F$^c$, E$^c$ and F, and E$^c$ and F$^c$.
+
+Proof:
+
+Assume E and F are independent. Since $E=EF\cup EF^c$ and $EF$ and $EF^c$ are mutually exclusive, 
+
+\begin{equation}
+\begin{split}
+P(E) =& P(EF)+P(EF^c)\\
+     =& P(E)P(F)+P(EF^c)  
+\end{split}	
+\end{equation}
+
+Equivalently:
+
+\begin{equation}
+\begin{split}
+P(EF^c) =& P(E)[1-P(F)]\\
+        =& P(E)P(F^c)
+\end{split}	
+\end{equation}
+
+
+### Bayes' rule
+
+[Quoted nearly verbatim from Kerns.]
+
+**Theorem**
+	\textbf{Bayes' Rule}. Let $B_{1}$, $B_{2}$, ..., $B_{n}$ be mutually exclusive and exhaustive and let $A$ be an event with 
+	$\mathbb{P}(A)>0$. Then 
+
+\begin{equation}
+\mathbb{P}(B_{k}|A)=\frac{\mathbb{P}(B_{k})\mathbb{P}(A|B_{k})}{\sum_{i=1}^{n}\mathbb{P}(B_{i})\mathbb{P}(A|B_{i})},\quad k=1,2,\ldots,n.\label{eq-bayes-rule}
+\end{equation}	
+
+The proof follows from looking at $\mathbb{P}(B_{k}\cap A)$ in two different ways. For simplicity, suppose that $P(B_{k})>0$ for all $k$. Then
+
+\begin{equation}
+\mathbb{P}(A)\mathbb{P}(B_{k}|A)=\mathbb{P}(B_{k}\cap A)=\mathbb{P}(B_{k})\mathbb{P}(A|B_{k}).
+\end{equation}
+
+Since $\mathbb{P}(A)>0$ we may divide through to obtain 
+
+\begin{equation}
+\mathbb{P}(B_{k}|A)=\frac{\mathbb{P}(B_{k})\mathbb{P}(A|B_{k})}{\mathbb{P}(A)}.
+\end{equation}
+
+Now remembering that  $\{B_{k}\}$ is a partition (i.e., mutually exclusive and exhaustive),  the denominator of the last expression is
+
+\begin{equation}
+\mathbb{P}(A)=\sum_{k=1}^{n}\mathbb{P}(B_{k}\cap A)=\sum_{k=1}^{n}\mathbb{P}(B_{k})\mathbb{P}(A|B_{k}).
+\end{equation}
+
+## Random variable theory
+
+A random variable $X$ is a function $X : S \rightarrow \mathbb{R}$ that associates to each outcome
+$\omega \in S$ exactly one number $X(\omega) = x$.
+
+$S_X$ is all the $x$'s (all the possible values of X, the support of X). I.e., $x \in S_X$. It seems we can also sloppily write $X \in S_X$ (not sure about this). 
+
+Good example: number of coin tosses till H
+
+\begin{itemize}
+  \item $X: \omega \rightarrow x$
+	\item $\omega$: H, TH, TTH,\dots (infinite)
+	\item $x=0,1,2,\dots; x \in S_X$
+\end{itemize}
+
+Every discrete (continuous) random variable X has associated with it a \textbf{probability mass (distribution)  function (pmf, pdf)}. I.e., PMF is used for discrete distributions and PDF for continuous. (I will sometimes use lower case for pdf and sometimes upper case. Some books, like Christensen et al., use pdf for both discrete and continuous distributions.)
+
+\begin{equation}
+p_X : S_X \rightarrow [0, 1] 
+\end{equation}
+
+defined by
+
+\begin{equation}
+p_X(x) = P(X(\omega) = x), x \in S_X
+ \end{equation}
+
+[\textbf{Note}: Books sometimes abuse notation by overloading the meaning of $X$. They usually have: $p_X(x) = P(X = x), x \in S_X$]
+
+Probability density functions (continuous case) or probability mass functions (discrete case) are functions that assign probabilities or relative frequencies to all events in a sample space.
+
+The expression 
+
+\begin{equation}
+ X \sim g(\cdot)
+\end{equation}
+
+\noindent
+means that the random variable $X$ has pdf/pmf $g(\cdot)$.
+For example, if we say that $X\sim N(\mu,\sigma^2)$, we are assuming that the pdf is
+
+\begin{equation}
+f(x)= \frac{1}{\sqrt{2\pi \sigma^2}} \exp[-\frac{(x-\mu)^2}{2\sigma^2}]
+\end{equation}
+
+We also need a \textbf{cumulative distribution function} or cdf because, in the continuous case, P(X=some point value) is zero and we therefore need a way to talk about P(X in a specific range). cdfs serve that purpose.
+
+In the continuous case, the cdf or distribution function is defined as: 
+
+\begin{equation}
+P(x<X) = F(x<X) =\int_{-\infty}^{X} f(x)\, dx
+\end{equation}
+
+\textbf{Note}: Almost any function can be a pdf as long as it sums to 1 over the sample space. Here is an example of a function that doesn't sum to 1:
+
+\begin{equation}
+f(x)=\exp[-\frac{(x-\mu)^2}{2 \sigma^2}]
+\end{equation}
+
+This is  the ``kernel'' of the normal pdf, and it doesn't sum to 1:
+
+```{r}
+normkernel<-function(x,mu=0,sigma=1){
+  exp((-(x-mu)^2/(2*(sigma^2))))
+}
+
+x<-seq(-10,10,by=0.01)
+
+plot(function(x) normkernel(x), -3, 3,
+      main = "Normal density",ylim=c(0,1),
+              ylab="density",xlab="X")
+```
+
+
+```{r}
+### area under the curve is less than 1:
+integrate(normkernel,lower=-Inf,upper=Inf)
+```
+
+Adding a normalizing constant makes the above kernel density a pdf.
+
+```{r}
+norm<-function(x,mu=0,sigma=1){
+  (1/sqrt(2*pi*(sigma^2))) * exp((-(x-mu)^2/(2*(sigma^2))))
+}
+
+x<-seq(-10,10,by=0.01)
+
+plot(function(x) norm(x), -3, 3,
+      main = "Normal density",ylim=c(0,1),
+              ylab="density",xlab="X")
+```
+
+```{r}
+### area under the curve sums to 1:
+integrate(norm,lower=-Inf,upper=Inf)
+```
+
+Recall that 
+a random variable $X$ is a function $X : S \rightarrow \mathbb{R}$ that associates to each outcome
+$\omega \in S$ exactly one number $X(\omega) = x$.
+$S_X$ is all the $x$'s (all the possible values of X, the support of X). I.e., $x \in S_X$.
+
+$X$ is a continuous random variable if there is a non-negative function $f$ defined for all real $x \in (-\infty,\infty)$ having the property that for any set B of real numbers, 
+
+\begin{equation}
+P\{X \in B\} = \int_B f(x) \, dx 
+\end{equation}
+
+Kerns has the following to add about the above:
+
+\begin{quote}
+Continuous random variables have supports that look like
+  
+	\begin{equation}
+	S_{X}=[a,b]\mbox{ or }(a,b),
+	\end{equation}
+	
+	or unions of intervals of the above form. Examples of random variables that are often taken to be continuous are:
+
+\begin{itemize}
+\item the height or weight of an individual,
+\item other physical measurements such as the length or size of an object, and
+\item durations of time (usually).
+\end{itemize}
+
+E.g., in psychology and linguistics we take as continous: 
+
+\begin{enumerate}
+\item reading time: Here the random variable X has possible values $\omega$ ranging from 0 ms to 
+some upper bound b ms, and the RV X maps each possible value $\omega$ to the corresponding number (0 to 0 ms, 1 to 1 ms, etc.). 
+\item acceptability ratings  (technically not true; but people generally treat ratings as continuous, at least in psycholinguistics)
+\item Event related potentials
+\end{enumerate}
+
+Every continuous random variable $X$ has a probability density function (PDF) denoted $f_{X}$ associated with it
+	that satisfies three basic properties:
+
+\begin{enumerate}
+\item $f_{X}(x)>0$ for $x\in S_{X}$,
+\item $\int_{x\in S_{X}}f_{X}(x)\,\mathrm{d} x=1$, and
+\item  $\mathbb{P}(X\in A)=\int_{x\in A}f_{X}(x)\:\mathrm{d} x$, for an event $A\subset S_{X}$.
+\end{enumerate}
+
+	We can say the following about continuous random variables:
+
+\begin{itemize}
+\item Usually, the set $A$ in condition 3 above takes the form of an interval, for example, $A=[c,d]$, in which case
+
+	  \begin{equation}
+	  \mathbb{P}(X\in A)=\int_{c}^{d}f_{X}(x)\:\mathrm{d} x.
+	  \end{equation}
+
+\item It follows that the probability that $X$ falls in a given interval is simply the area under the curve of $f_{X}$ over the interval.
+\item Since the area of a line $x=c$ in the plane is zero, $\mathbb{P}(X=c)=0$  for any value $c$. In other words, the chance that $X$ equals a particular value $c$ is zero, and this is true for any number $c$. Moreover, when $a<b$ all of the following probabilities are the same:
+
+	  \begin{equation}
+	  \mathbb{P}(a\leq X\leq b)=\mathbb{P}(a<X\leq b)=\mathbb{P}(a\leq X<b)=\mathbb{P}(a<X<b).
+	  \end{equation}
+\item The PDF $f_{X}$ can sometimes be greater than 1. This is in contrast to the discrete case; every nonzero value of a PMF is a probability which is restricted to lie in the interval $[0,1]$.
+\end{itemize}
+\end{quote}
+
+$f(x)$ is the probability density function of the random variable $X$.
+
+Since $X$ must assume some value, $f$ must satisfy
+
+\begin{equation}
+1= P\{X \in (-\infty,\infty)\} = \int_{-\infty}^{\infty} f(x) \, dx 
+\end{equation}
+
+If $B=[a,b]$, then 
+
+\begin{equation}
+P\{a \leq X \leq b\} = \int_{a}^{b} f(x) \, dx 
+\end{equation}
+
+If $a=b$, we get
+
+\begin{equation}
+P\{X=a\} = \int_{a}^{a} f(x) \, dx = 0
+\end{equation}
+
+Hence, for any continuous random variable, 
+
+\begin{equation}
+P\{X < a\} = P \{X \leq a \} = F(a) = \int_{-\infty}^{a} f(x) \, dx 
+\end{equation}
+
+$F$ is the \textbf{cumulative distribution function}. Differentiating both sides in the above equation:
+
+\begin{equation}
+\frac{d F(a)}{da} = f(a) 
+\end{equation}
+
+The density (PDF) is the derivative of the CDF. 
+
+### Some basic results concerning random variables
+
+These are provided only for reference; you won't need to actively use them in this course.
+
+\begin{enumerate}
+	\item \begin{equation}
+	E[X]= \int_{-\infty}^{\infty} x f(x) \, dx
+	\end{equation}
+\item
+	\begin{equation}
+	E[g(X)]= \int_{-\infty}^{\infty} g(x) f(x) \, dx
+	\end{equation}
+\item
+	\begin{equation}
+	E[aX+b]= aE[X]+b
+	\end{equation}
+\item
+	\begin{equation}
+	Var[X]= E[(X-\mu)^2]=E[X^2]-(E[X])^2
+	\end{equation}
+\item
+	\begin{equation}
+	Var(aX+b)= a^2Var(X)
+	\end{equation}	
+\end{enumerate}
+
+So, so far, we know what a random variable is, and we know that by definition it has a pdf and a cdf associated with it. 
+
+### What you can do with a pdf
+
+You can:
+
+\begin{enumerate}
+\item
+Calculate the mean:
+
+Discrete case:
+
+\begin{equation}
+E[X]= \underset{i=1}{\overset{n}{\sum}} x_i p(x_i)
+\end{equation}
+
+Continuous case:
+
+\begin{equation}
+E[X]= \int_{-\infty}^{\infty} x f(x) \, dx
+\end{equation}
+
+\item 
+Calculate the variance:
+
+\begin{equation}
+  Var(X)= E[X^2] - (E[X])^2
+\end{equation}
+\item 
+Compute quartiles: e.g., for some pdf f(x):
+
+\begin{equation}
+\int_{-\infty}^{Q} f(x)\, dx
+\end{equation}
+
+For example, take $f(x)$ to be the normal distribution with mean 0 and sd 1. Suppose we want to know:
+
+\begin{equation}
+\int_{0}^{1} f(x)\, dx
+\end{equation}
+
+We can do this in R as follows:\footnote{This is a very important piece of R code here. Make sure you understand the relationship between the integral and the R functions used here.} 
+
+```{r,eval=FALSE}
+pnorm(1)-pnorm(0)
+```
+
+\end{enumerate}
+
+## Six important distributions
+
+### Binomial distribution
+
+If we have $x$ successes in $n$ trials, given a success probability $p$ for each trial. If $x \sim Bin(n,p)$.
+
+\begin{equation}
+P(x\mid n, p) = {n \choose k} p^k (1-p)^{n-k} 
+\end{equation}
+
+[Recall that: ${n \choose k} = \frac{n!}{(n-r)! r!}$]
+
+The mean is $np$ and the variance $np(1-p)$.
+
+When $n=1$ we have the Bernoulli distribution.
+
+\begin{verbatim}
+###pmf:
+dbinom(x, size, prob, log = FALSE)
+### cdf:
+pbinom(q, size, prob, lower.tail = TRUE, log.p = FALSE)
+### quantiles:
+qbinom(p, size, prob, lower.tail = TRUE, log.p = FALSE)
+### pseudo-random generation of samples:
+rbinom(n, size, prob)
+\end{verbatim}
+
+### Uniform distribution
+
+A random variable $(X)$ with the continuous uniform distribution on the interval $(\alpha,\beta)$ has PDF
+
+\begin{equation}
+f_{X}(x)=
+\begin{cases}
+\frac{1}{\beta-\alpha}, & \alpha < x < \beta,\\
+0 , & \hbox{otherwise}
+\end{cases}
+\end{equation}
+
+The associated $\mathsf{R}$ function is $\mathsf{dunif}(\mathtt{min}=a,\,\mathtt{max}=b)$. We write $X\sim\mathsf{unif}(\mathtt{min}=a,\,\mathtt{max}=b)$. Due to the particularly simple form of this PDF we can also write down explicitly a formula for the CDF $F_{X}$:
+
+\begin{equation}
+F_{X}(a)=
+\begin{cases}
+0, & a < 0,\\
+\frac{a-\alpha}{\beta-\alpha}, & \alpha \leq t < \beta,\\
+1, & a \geq \beta.
+\end{cases}
+\label{eq-unif-cdf}
+\end{equation}
+
+\begin{equation}
+E[X]= \frac{\beta+\alpha}{2}
+\end{equation}
+
+\begin{equation}
+Var(X)= \frac{(\beta-\alpha)^2}{12}
+\end{equation}
+
+\begin{verbatim}
+dunif(x, min = 0, max = 1, log = FALSE)
+punif(q, min = 0, max = 1, lower.tail = TRUE, log.p = FALSE)
+qunif(p, min = 0, max = 1, lower.tail = TRUE, log.p = FALSE)
+runif(n, min = 0, max = 1)
+\end{verbatim}
+
+### Normal distribution
+
+\begin{equation}
+f_{X}(x)=\frac{1}{\sigma\sqrt{2\pi}}e^{ \frac{-(x-\mu)^{2}}{2\sigma^{2}}},\quad -\infty < x < \infty.
+\end{equation}
+
+We write $X\sim\mathsf{norm}(\mathtt{mean}=\mu,\,\mathtt{sd}=\sigma)$, and the associated $\mathsf{R}$ function is \texttt{dnorm(x, mean = 0, sd = 1)}.
+
+```{r,fig.cap="\\label{fig:normaldistr}Normal distribution."}
+plot(function(x) dnorm(x), -3, 3,
+      main = "Normal density",ylim=c(0,.4),
+              ylab="density",xlab="X")
+```
+
+If $X$ is normally distributed with parameters $\mu$ and $\sigma^2$, then $Y=aX+b$ is normally distributed with parameters $a\mu + b$ and $a^2\sigma^2$.
+
+\textbf{Standard or unit normal random variable:} 
+
+If $X$ is normally distributed with parameters $\mu$ and $\sigma^2$, then $Z=(X-\mu)/\sigma$ is normally distributed with parameters $0,1$.
+
+We conventionally write $\Phi (x)$ for the CDF:
+
+\begin{equation}
+\Phi (x)=\frac{1}{\sqrt{2\pi}} \int_{-\infty}^{x}  e^{\frac{-y^2}{2}} \, dy 
+\quad \textrm{where}~y=(x-\mu)/\sigma
+\end{equation}
+
+Old-style (pre-computer era) printed tables give the values for positive $x$; for negative $x$ we do:
+
+\begin{equation}
+\Phi (-x)= 1- \Phi (x),\quad -\infty < x < \infty
+\end{equation}
+
+If $Z$ is a standard normal random variable (SNRV) then
+
+\begin{equation}
+p\{ Z\leq -x\} = P\{Z>x\}, \quad -\infty < x < \infty
+\end{equation}
+
+Since $Z=((X-\mu)/\sigma)$ is an SNRV whenever $X$ is normally distributed with parameters $\mu$ and $\sigma^2$, then the CDF of $X$ can be expressed as:
+
+\begin{equation}
+F_X(a) = P\{ X\leq a \} = P\left( \frac{X - \mu}{\sigma} \leq \frac{a - \mu}{\sigma}\right) = \Phi\left( \frac{a - \mu}{\sigma} \right)
+\end{equation}
+
+The standardized version of a normal
+random variable X is used to compute specific probabilities relating to X (it is also easier to compute probabilities from different CDFs so that the two computations are comparable).
+
+\begin{verbatim}
+dnorm(x, mean = 0, sd = 1, log = FALSE)
+pnorm(q, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)
+qnorm(p, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)
+rnorm(n, mean = 0, sd = 1)
+\end{verbatim}
+
+
+### The Poisson distribution
+
+As Kerns puts it (I quote him nearly exactly, up to the definition):
+
+\begin{quote}
+  This is a distribution associated with ``rare events'', for reasons which will become clear in a moment. The events might be:
+  \begin{itemize}
+    \item traffic accidents,
+		\item typing errors, or
+		\item customers arriving in a bank.		
+	\end{itemize}
+
+For psychology and linguistics, one application is in eye tracking: modeling number of fixations. 
+
+Let $\lambda$ be the average number of events in the time interval $[0,1]$. Let the random variable $X$ count the number of events occurring in the interval. Then under certain reasonable conditions it can be shown that
+
+	\begin{equation}
+	f_{X}(x)=\mathbb{P}(X=x)=\mathrm{e}^{-\lambda}\frac{\lambda^{x}}{x!},\quad x=0,1,2,\ldots
+	\end{equation}
+\end{quote}
+
+
+
+### Beta distribution
+
+This is a generalization of the continuous uniform distribution.
+
+\begin{equation*}
+f(x)=  \left\{ 	
+\begin{array}{l l}
+       \frac{1}{B(a,b)} x^{a - 1} (1-x)^{b-1}  & \quad \textrm{if } 0< x < 1\\
+       0 & \quad \textrm{otherwise}\\
+\end{array} \right.
+\end{equation*}
+
+\noindent
+where
+
+\begin{equation*}
+B(a,b) = \int_0^1 x^{a-1}(1-x)^{b-1}\, dx
+\end{equation*}
+
+
+We write $X\sim\mathsf{beta}(\mathtt{shape1}=\alpha,\,\mathtt{shape2}=\beta)$. The associated $\mathsf{R}$ function is =dbeta(x, shape1, shape2)=. 
+
+The mean and variance are
+
+\begin{equation} 
+E[X]=\frac{a}{a+b}\mbox{ and }Var(X)=\frac{ab}{\left(a+b\right)^{2}\left(a+b+1\right)}.
+\end{equation}
+
+
+This distribution is going to turn up a lot in Bayesian data analysis.
+
+### $t$ distribution
+
+A random variable $X$ with PDF
+
+\begin{equation}
+f_{X}(x) = \frac{\Gamma\left[ (r+1)/2\right] }{\sqrt{r\pi}\,\Gamma(r/2)}\left( 1 + \frac{x^{2}}{r} \right)^{-(r+1)/2},\quad -\infty < x < \infty
+\end{equation}
+
+is said to have Student's $t$ distribution with $r$ degrees of freedom, and we write $X\sim\mathsf{t}(\mathtt{df}=r)$. 
+The associated $\mathsf{R}$ functions are dt, pt, qt, and rt, which give the PDF, CDF, quantile function, and simulate random variates, respectively. 
+
+We will just write:
+
+$X\sim t(\mu,\sigma^2,r)$, where $r$ is the degrees of freedom $(n-1)$, where $n$ is sample size.
+
+## Jointly distributed random variables
+
+### Discrete case
+
+[This section is an extract from Kerns.]
+
+Consider two discrete random variables $X$ and $Y$ with PMFs $f_{X}$ and $f_{Y}$ that are supported on the sample spaces $S_{X}$ and $S_{Y}$, respectively. Let $S_{X,Y}$ denote the set of all possible observed \textbf{pairs} $(x,y)$, called the \textbf{joint support set} of $X$ and $Y$. Then the \textbf{joint probability mass function} of $X$ and $Y$ is the function $f_{X,Y}$ defined by
+
+\begin{equation}
+f_{X,Y}(x,y)=\mathbb{P}(X=x,\, Y=y),\quad \mbox{for }(x,y)\in S_{X,Y}.\label{eq-joint-pmf}
+\end{equation}
+
+Every joint PMF satisfies
+
+\begin{equation}
+f_{X,Y}(x,y)>0\mbox{ for all }(x,y)\in S_{X,Y},
+\end{equation}
+
+and
+
+\begin{equation}
+\sum_{(x,y)\in S_{X,Y}}f_{X,Y}(x,y)=1.
+\end{equation}
+
+It is customary to extend the function $f_{X,Y}$ to be defined on all of $\mathbb{R}^{2}$ by setting $f_{X,Y}(x,y)=0$ for $(x,y)\not\in S_{X,Y}$. 
+
+In the context of this chapter, the PMFs $f_{X}$ and $f_{Y}$ are called the \textbf{marginal PMFs} of $X$ and $Y$, respectively. If we are given only the joint PMF then we may recover each of the marginal PMFs by using the Theorem of Total Probability: observe
+\begin{eqnarray}
+f_{X}(x) & = & \mathbb{P}(X=x),\\
+ & = & \sum_{y\in S_{Y}}\mathbb{P}(X=x,\, Y=y),\\
+ & = & \sum_{y\in S_{Y}}f_{X,Y}(x,y).
+\end{eqnarray}
+By interchanging the roles of $X$ and $Y$ it is clear that 
+\begin{equation}
+f_{Y}(y)=\sum_{x\in S_{X}}f_{X,Y}(x,y).\label{eq-marginal-pmf}
+\end{equation}
+Given the joint PMF we may recover the marginal PMFs, but the converse is not true. Even if we have \textbf{both} marginal distributions they are not sufficient to determine the joint PMF; more information is needed.
+%\footnote{We are not at a total loss, however. There are Frechet bounds which pose limits on how large (and small) the joint distribution must be at each point.}
+
+Associated with the joint PMF is the \textbf{joint cumulative distribution function} $F_{X,Y}$ defined by
+\[
+F_{X,Y}(x,y)=\mathbb{P}(X\leq x,\, Y\leq y),\quad \mbox{for }(x,y)\in\mathbb{R}^{2}.
+\]
+The bivariate joint CDF is not quite as tractable as the univariate CDFs, but in principle we could calculate it by adding up quantities of the form in Equation~\ref{eq-joint-pmf}. The joint CDF is typically not used in practice due to its inconvenient form; one can usually get by with the joint PMF alone.
+
+\textbf{Example}:
+
+Roll a fair die twice. Let $X$ be the face shown on the first roll, and let $Y$ be the face shown on the second roll. For this example, it suffices to define
+
+\[
+f_{X,Y}(x,y)=\frac{1}{36},\quad x=1,\ldots,6,\ y=1,\ldots,6.
+\]
+
+The marginal PMFs are given by $f_{X}(x)=1/6$, $x=1,2,\ldots,6$, and $f_{Y}(y)=1/6$, $y=1,2,\ldots,6$, since
+
+\[
+f_{X}(x)=\sum_{y=1}^{6}\frac{1}{36}=\frac{1}{6},\quad x=1,\ldots,6,
+\]
+
+and the same computation with the letters switched works for $Y$.
+
+Here, and in many other ones, the joint support can be written as a product set of the support of $X$ ``times'' the support of $Y$, that is, it may be represented as a cartesian product set, or rectangle, $S_{X,Y}=S_{X}\times S_{Y} \hbox{~where~} S_{X} \times S_{Y}= \{ (x,y):\ x\in S_{X},\, y\in S_{Y} \}$. 
+This form is a necessary condition for $X$ and $Y$ to be \textbf{independent} (or alternatively \textbf{exchangeable} when $S_{X}=S_{Y}$). But please note that in general it is not required for $S_{X,Y}$ to be of rectangle form.
+
+### Continuous case
+
+For random variables $X$ and $y$, the \textbf{joint cumulative pdf} is
+
+\begin{equation}
+F(a,b) = P(X\leq a, Y\leq b) \quad -\infty  < a,b<\infty
+\end{equation}
+
+The \textbf{marginal distributions} of $F_X$ and $F_Y$ are the CDFs of each of the associated RVs:
+
+\begin{enumerate}
+	\item The CDF of $X$:
+
+	\begin{equation}
+	F_X(a) = P(X\leq a) = F_X(a,\infty)	
+	\end{equation}
+
+	\item The CDF of $Y$:
+
+	\begin{equation}
+	F_Y(a) = P(Y\leq b) = F_Y(\infty,b)	
+	\end{equation}
+	
+\end{enumerate}
+
+\begin{definition}\label{def:jointcont}
+\textbf{Jointly continuous}: Two RVs $X$ and $Y$ are jointly continuous if there exists a function $f(x,y)$ defined for all real $x$ and $y$, such that for every set $C$:
+
+\begin{equation} \label{jointpdf}
+P((X,Y)\in C) =
+\iintop_{(x,y)\in C} f(x,y)\, dx\,dy 	
+\end{equation}
+
+
+$f(x,y)$ is the \textbf{joint PDF} of $X$ and $Y$.
+
+Every joint PDF satisfies
+\begin{equation}
+f(x,y)\geq 0\mbox{ for all }(x,y)\in S_{X,Y},
+\end{equation}
+and
+\begin{equation}
+\iintop_{S_{X,Y}}f(x,y)\,\mathrm{d} x\,\mathrm{d} y=1.
+\end{equation}
+	
+\end{definition}
+
+For any sets of real numbers $A$ and $B$, and if $C=\{(x,y): x\in A, y\in B  \}$, it follows from equation~\ref{jointpdf} that
+
+\begin{equation} 
+P((X\in A,Y\in B)\in C) = \int_B \int_{A} f(x,y)\, dx\,dy 	
+\end{equation}
+
+Note that
+
+\begin{equation}
+F(a,b) = P(X\in (-\infty,a]),Y\in (-\infty,b]))	= \int_{-\infty}^b \int_{-\infty}^a f(x,y)\, dx\,dy 	
+\end{equation}
+
+Differentiating, we get the joint pdf:
+
+\begin{equation}
+f(a,b) = \frac{\partial^2}{\partial a\partial b} F(a,b)	
+\end{equation}
+
+One way to understand the joint PDF:
+
+\begin{equation}
+P(a<X<a+da,b<Y<b+db)=\int_b^{d+db}\int_a^{a+da} f(x,y)\, dx\, dy \approx f(a,b) da db
+\end{equation}
+
+Hence, $f(x,y)$ is a measure of how probable it is that the random vector $(X,Y)$ will be near $(a,b)$.
+
+### Marginal probability distribution functions
+
+If X and Y are jointly continuous, they are individually continuous, and their PDFs are:
+
+\begin{equation}
+\begin{split}
+P(X\in A) = & P(X\in A, Y\in (-\infty,\infty))	\\
+= & \int_A \int_{-\infty}^{\infty} f(x,y)\,dy\, dx\\
+= & \int_A f_X(x)\, dx
+\end{split}	
+\end{equation}
+
+\noindent
+where
+
+\begin{equation}
+f_X(x) = \int_{-\infty}^{\infty} f(x,y)\, dy	
+\end{equation}
+
+Similarly:
+
+\begin{equation}
+f_Y(y) =  \int_{-\infty}^{\infty} f(x,y)\, dx		
+\end{equation}
+
+### Independent random variables
+
+Random variables $X$ and $Y$ are independent iff, for any two sets of real numbers $A$ and $B$:
+
+\begin{equation}
+P(X\in A, Y\in B)	= P(X\in A)P(Y\in B)
+\end{equation}
+
+In the jointly continuous case:
+
+\begin{equation}
+f(x,y) = f_X(x)f_Y(y) \quad \hbox{for all } x,y	
+\end{equation} 
+
+A necessary and sufficient condition for the random variables $X$ and $Y$ to be
+independent is for their joint probability density function (or joint probability mass function in the discrete case) $f(x,y)$ to factor into two terms, one depending only on
+$x$ and the other depending only on $y$. 
+%This can be stated as a proposition:
+
+
+\textbf{Example from Kerns}:	
+Let the joint PDF of $(X,Y)$ be given by
+\[
+f_{X,Y}(x,y)=\frac{6}{5}\left(x+y^{2}\right),\quad 0 < x < 1,\ 0 < y < 1.
+\]
+The marginal PDF of $X$ is
+\begin{eqnarray*}
+f_{X}(x) & = & \int_{0}^{1}\frac{6}{5}\left(x+y^{2}\right)\,\mathrm{d} y,\\
+ & = & \left.\frac{6}{5}\left(xy+\frac{y^{3}}{3}\right)\right|_{y=0}^{1},\\
+ & = & \frac{6}{5}\left(x+\frac{1}{3}\right),
+\end{eqnarray*}
+for $0 < x < 1$, and the marginal PDF of $Y$ is
+\begin{eqnarray*}
+f_{Y}(y) & = & \int_{0}^{1}\frac{6}{5}\left(x+y^{2}\right)\,\mathrm{d} x,\\
+ & = & \left.\frac{6}{5}\left(\frac{x^{2}}{2}+xy^{2}\right)\right|_{x=0}^{1},\\
+ & = & \frac{6}{5}\left(\frac{1}{2}+y^{2}\right),
+\end{eqnarray*}
+for $0 < y < 1$. 
+
+In this example the joint support set was a rectangle $[0,1]\times[0,1]$, but it turns out that $X$ and $Y$ are not independent. 
+This is because $\frac{6}{5}\left(x+y^{2}\right)$ cannot be stated as a product of two terms ($f_X(x)f_Y(y)$).
+
+### Sums of independent random variables
+
+[Taken nearly verbatim from Ross.]
+
+Suppose that X and Y are
+independent, continuous random variables having probability density functions $f_X$
+and $f_Y$. The cumulative distribution function of $X + Y$ is obtained as follows:
+
+\begin{equation}
+\begin{split}
+F_{X+Y}(a) =& P(X+Y\leq a)\\
+           =& \iintop_{x+y\leq a} f_{XY}(x,y)\, dx\, dy\\
+           =& \iintop_{x+y\leq a} f_X(x)f_Y(y)\, dx\, dy\\
+           =& \int_{-\infty}^{\infty}\int_{-\infty}^{a-y} f_X(x)f_Y(y)\, dx\, dy\\ 
+           =& \int_{-\infty}^{\infty}\int_{-\infty}^{a-y}f_X(x)\,dx f_Y(y)\, dy\\ 
+           =& \int_{-\infty}^{\infty}F_X(a-y) f_Y(y)\, dy\\ 
+\end{split}	
+\end{equation}
+
+The CDF $F_{X+Y}$ is the \textbf{convolution} of the distributions $F_X$ and $F_Y$. 
+
+
+If we differentiate the above equation, we get the pdf $f_{X+Y}$:
+
+\begin{equation}
+\begin{split}	
+f_{X+Y} =& \frac{d}{dx}\int_{-\infty}^{\infty}F_X(a-y) f_Y(y)\, dy	\\
+=& \int_{-\infty}^{\infty}\frac{d}{dx}F_X(a-y) f_Y(y)\, dy	\\
+=& \int_{-\infty}^{\infty}f_X(a-y) f_Y(y)\, dy
+\end{split}	
+\end{equation}
+
+
+### Conditional distributions
+
+#### Discrete case
+
+Recall that the conditional probability of $B$ given $A$, denoted $\mathbb{P}(B\mid A)$, is defined by
+
+\begin{equation}
+\mathbb{P}(B\mid A)=\frac{\mathbb{P}(A\cap B)}{\mathbb{P}(A)},\quad \mbox{if }\mathbb{P}(A)>0.
+\end{equation}
+
+If $X$ and $Y$ are discrete random variables, then we can define the conditional PMF of $X$ given that $Y=y$ as follows:
+
+
+\begin{equation}
+\begin{split}
+p_{X\mid Y}(x\mid y) =& P(X=x\mid Y=y)\\
+                     =& \frac{P(X=x, Y=y)}{P(Y=y)}\\
+                     =& \frac{p(x,y)}{p_Y(y)}
+\end{split}	
+\end{equation}
+
+\noindent
+for all values of $y$ where $p_Y(y)=P(Y=y)>0$.
+
+The \textbf{conditional cumulative distribution function} of $X$ given $Y=y$ is defined, for all $y$ such that $p_Y(y)>0$, as follows:
+
+\begin{equation}
+\begin{split}
+F_{X\mid Y}	=& P(X\leq x\mid Y=y)\\
+            =& \underset{a\leq x}{\overset{}{\sum}} p_{X\mid Y}(a\mid y)
+\end{split}	
+\end{equation}
+
+If $X$ and $Y$ are independent then
+
+\begin{equation}
+p_{X\mid Y}(x\mid y) = P(X=x)=p_X(x)	
+\end{equation}
+
+See the examples starting p.\ 264 of Ross.
+
+#### Continuous case
+
+[Taken almost verbatim from Ross.]
+
+If $X$ and $Y$ have a joint probability density function $f(x, y)$, then the conditional probability density function of $X$ given that $Y = y$ is defined, for all values of $y$ such that $f_Y(y) > 0$,by
+
+\begin{equation}
+f_{X\mid Y}(x\mid y) = \frac{f(x,y)}{f_Y(y)}	
+\end{equation}
+
+We can understand this definition by considering what 
+$f_{X\mid Y}(x\mid y)\, dx$ amounts to: 
+
+\begin{equation}
+\begin{split}
+f_{X\mid Y}(x\mid y)\, dx =& \frac{f(x,y)}{f_Y(y)} \frac{dxdy}{dy}\\
+		=& \frac{f(x,y)dxdy}{f_Y(y)dy} \\
+		=& \frac{P(x<X<d+dx,y<Y<y+dy)}{y<P<y+dy}
+\end{split}	
+\end{equation}
+
+
+### Covariance and correlation
+
+There are two very special cases of joint expectation: the \textbf{covariance} and the \textbf{correlation}. These are measures which help us quantify the dependence between $X$ and $Y$. 
+
+\begin{definition}
+The \textbf{covariance} of $X$ and $Y$ is
+\begin{equation}
+\mbox{Cov}(X,Y)=\mathbb{E}(X-\mathbb{E} X)(Y-\mathbb{E} Y).
+\end{equation}
+\end{definition}
+
+Shortcut formula for covariance:
+
+
+\begin{equation}
+\mbox{Cov}(X,Y)=\mathbb{E}(XY)-(\mathbb{E} X)(\mathbb{E} Y).
+\end{equation}
+
+The \textbf{Pearson product moment correlation} between $X$ and $Y$ is the covariance between $X$ and $Y$ rescaled to fall in the interval $[-1,1]$. It is formally defined by 
+\begin{equation}
+\mbox{Corr}(X,Y)=\frac{\mbox{Cov}(X,Y)}{\sigma_{X}\sigma_{Y}}.
+\end{equation}
+
+The correlation is usually denoted by $\rho_{X,Y}$ or simply $\rho$ if the random variables are clear from context. There are some important facts about the correlation coefficient: 
+
+\begin{enumerate}
+	\item The range of correlation is $-1\leq\rho_{X,Y}\leq1$.
+	\item Equality holds above ($\rho_{X,Y}=\pm1$) if and only if $Y$ is a linear function of $X$ with probability one.
+\end{enumerate}
+
+### Multivariate normal distributions
+
+This is a very important distribution that we will need in linear mixed models.
+
+Recall that in the univariate normal distribution:
+
+\begin{equation}
+f(x) = \frac{1}{\sqrt{2\pi \sigma^2}} e\{ - \frac{(\frac{(x-\mu)}{\sigma})^2}{2}\}   \quad -\infty < x < \infty
+\end{equation}
+
+We can write the power of the exponential as:
+
+\begin{equation}
+(\frac{(x-\mu)}{\sigma})^2 = (x-\mu)(x-\mu)(\sigma^2)^{-1} = (x-\mu)(\sigma^2)^{-1}(x-\mu) = Q
+\end{equation}
+
+Generalizing this to the multivariate case: 
+
+\begin{equation}
+Q= (x-\mu)' \Sigma ^{-1} (x-\mu)	
+\end{equation}
+
+So, for multivariate case:
+
+\begin{equation}
+f(x) = \frac{1}{\sqrt{2\pi det \Sigma }} e\{ - Q/2\}	 \quad -\infty < x_i < \infty, i=1,\dots,n
+\end{equation}
+
+
+Properties of the multivariate normal (MVN) X:
+
+\begin{itemize}
+	\item Linear combinations of X are normal distributions.
+	\item All subset's of X's components have a normal distribution.
+	\item Zero covariance implies independent distributions.
+	\item Conditional distributions are normal.
+\end{itemize}
+
+\textbf{Visualizing bivariate distributions}
+
+First, a visual of two uncorrelated RVs:
+
+```{r,fig.cap="\\label{fig:bivaruncorr}Visualization of two uncorrelated random variables."}
+library(MASS)
+
+bivn<-mvrnorm(1000,mu=c(0,1),Sigma=matrix(c(1,0,0,2),2))
+bivn.kde<-kde2d(bivn[,1],bivn[,2],n=50)
+persp(bivn.kde,phi=10,theta=0,shade=0.2,border=NA,
+      main="Simulated bivariate normal density")
+```
+
+And here is an example of a positively correlated case: 
+
+```{r,bivarcorr,fig.cap="\\label{fig:bivarcorr}Visualization of two correlated random variables."}
+bivn<-mvrnorm(1000,mu=c(0,1),Sigma=matrix(c(1,0.9,0.9,2),2))
+bivn.kde<-kde2d(bivn[,1],bivn[,2],n=50)
+persp(bivn.kde,phi=10,theta=0,shade=0.2,border=NA,
+      main="Simulated bivariate normal density")
+```
+
+And here is an example with a negative correlation:
+
+```{r,bivarcorrneg,fig.cap="\\label{fig:bivarnegcorr}Visualization of two negatively correlated random variables."}
+bivn<-mvrnorm(1000,mu=c(0,1),
+              Sigma=matrix(c(1,-0.9,-0.9,2),2))
+bivn.kde<-kde2d(bivn[,1],bivn[,2],n=50)
+persp(bivn.kde,phi=10,theta=0,shade=0.2,border=NA,
+      main="Simulated bivariate normal density")
+```
+
+\textbf{Visualizing conditional distributions}
+
+You can run the following code to get a visualization of what a conditional distribution looks like when we take ``slices'' from the conditioning random variable:
+
+```{r,eval=FALSE}
+for(i in 1:50){
+  plot(bivn.kde$z[i,1:50],type="l",ylim=c(0,0.1))
+  Sys.sleep(.5)
+}
+```
+
+
+## Maximum likelihood estimation
+
+Here, we look at the sample values and then choose as our estimates of the unknown parameters the values for which the probability or probability density of getting the sample values is a maximum. 
+
+### Discrete case
+
+Suppose the observed sample values are $x_1, x_2,\dots, x_n$. The probability of getting them is
+
+\begin{equation}
+P(X_1=x_1,X_2=x_2,\dots,X_n=x_n) = f(X_1=x_1,X_2=x_2,\dots,X_n=x_n;\theta)  
+\end{equation} 
+
+\noindent
+i.e., the function $f$ is the value of the joint probability \textbf{distribution} of the random variables $X_1,\dots,X_n$ at $X_1=x_1,\dots,X_n=x_n$. Since the sample values have been observed and are fixed, $f(x_1,\dots,x_n;\theta)$ is a function of $\theta$. The function $f$ is called a \textbf{likelihood function}.
+
+### Continuous case
+
+Here, $f$ is the joint probability \textbf{density}, the rest is the same as above.
+
+\begin{definition}\label{def:lik}
+If $x_1, x_2,\dots, x_n$ are the values of a random sample from a population with parameter $\theta$, the \textbf{likelihood function} of the sample is given by 
+
+\begin{equation}
+L(\theta) = f(x_1, x_2,\dots, x_n; \theta)  
+\end{equation}
+
+\noindent
+for values of $\theta$ within a given domain. Here, $f(X_1=x_1,X_2=x_2,\dots,X_n=x_n;\theta)$ is the joint probability distribution or density of the random variables $X_1,\dots,X_n$ at $X_1=x_1,\dots,X_n=x_n$.
+
+\end{definition}
+
+So, the method of maximum likelihood consists of maximizing the likelihood function with respect to $\theta$. The value of $\theta$ that maximizes the likelihood function is the \textbf{MLE} (maximum likelihood estimate) of $\theta$.
+
+
+### Finding maximum likelihood estimates for different distributions
+
+**Example 1**
+
+Let $X_i$, $i=1,\dots,n$ be a random variable with PDF $f(x; \sigma) = \frac{1}{2\sigma} exp (-\frac{\mid x \mid}{\sigma})$. Find $\hat \sigma$, the MLE of $\sigma$.
+
+
+\begin{equation}
+  L(\sigma) = \prod f(x_i; \sigma) = \frac{1}{(2\sigma)^n} exp (-\sum \frac{\mid x_i \mid}{\sigma})
+\end{equation}
+
+Let $\ell$ be log likelihood. Then:
+
+\begin{equation}
+  \ell (x; \sigma) = \sum \left[ - \log 2 - \log \sigma - \frac{\mid x_i \mid}{\sigma} \right]
+\end{equation}
+
+Differentiating and equating to zero to find maximum:
+
+\begin{equation}
+  \ell ' (\sigma) = \sum \left[- \frac{1}{\sigma} + \frac{\mid x_i \mid}{\sigma^2}  \right] = - \frac{n}{\sigma} + \frac{\mid x_i \mid}{\sigma^2} =
+   0
+\end{equation}
+
+Rearranging the above, the MLE for $\sigma$ is:
+
+\begin{equation}
+  \hat \sigma = \frac{\sum \mid x_i \mid}{n}
+\end{equation}
+
+
+**Example 2: Poisson**
+
+\begin{eqnarray}
+  L (\mu; x) & = \prod \frac{\exp^{-\mu} \mu ^{x_i}}{x_i!}\\
+             & = \exp^{-\mu} \mu^{\sum x_i} \frac{1}{\prod x_i !} 
+\end{eqnarray}
+
+
+Log lik:
+
+\begin{equation}
+\ell (\mu; x) = -n\mu + \sum x_i \log \mu - \sum \log y!  
+\end{equation}
+
+Differentiating:
+
+\begin{equation}
+\ell ' (\mu) = -n + \frac{\sum x_i}{\mu}  = 0
+\end{equation}
+
+Therefore:
+
+\begin{equation}
+\hat \lambda = \frac{\sum x_i}{n}
+\end{equation}
+
+
+**Example 3: Binomial**
+
+
+
+\begin{equation}
+L(\theta) = {n \choose x} \theta^x (1-\theta)^{n-x} 
+\end{equation}
+
+Log lik:
+
+\begin{equation}
+\ell (\theta) = \log {n \choose x} + x \log \theta + (n-x)  \log (1-\theta)
+\end{equation}
+
+Differentiating:
+
+\begin{equation}
+\ell ' (\theta) = \frac{x}{\theta} - \frac{n-x}{1-\theta} = 0 
+\end{equation}
+
+Thus:
+
+\begin{equation}
+\hat \theta = \frac{x}{n} 
+\end{equation}
+
+
+**Example 4: Normal**
+
+Let $X_1,\dots,X_n$ constitute a random variable of size $n$ from a normal population with mean $\mu$ and variance $\sigma^2$, find joint maximum likelihood estimates of these two parameters.
+
+\begin{eqnarray}
+L(\mu; \sigma^2) & = \prod N(x_i; \mu, \sigma)  \\
+                 & = (\frac{1}{2 \pi\sigma^2 })^{n/2} \exp (-\frac{1}{2\sigma^2} \sum (x_i - \mu)^2)\\ 
+\end{eqnarray}
+
+
+Taking logs and differentiating with respect to $\mu$ and $\sigma^2$, we get:
+
+\begin{equation}
+  \hat \mu = \frac{1}{n}\sum x_i = \bar{x}  
+\end{equation}
+
+and
+
+\begin{equation}
+  \hat \sigma ^2 = \frac{1}{n}\sum (x_i-\bar{x})^2
+\end{equation}
+ 
+
+
+### Visualizing likelihood and maximum log likelihood for normal
+
+For simplicity consider the case where $N(\mu=0,\sigma^2=1)$.
+
+```{r,logliknormal,fig.cap="\\label{fig:maxlik}Maximum likelihood and log likelihood."}
+op<-par(mfrow=c(1,2),pty="s")
+plot(function(x) dnorm(x,log=F), -3, 3,
+      main = "Normal density",#ylim=c(0,.4),
+              ylab="density",xlab="X")
+abline(h=0.4)
+plot(function(x) dnorm(x,log=T), -3, 3,
+      main = "Normal density (log)",#ylim=c(0,.4),
+              ylab="density",xlab="X")
+abline(h=log(0.4))
+```
+
+
+
+### MLE using R
+
+#### One-parameter case
+
+Estimating $p$ for the binomial distribution:
+Let's assume we have the result of 10 coin tosses. We know that the MLE is the number of successes divided by the sample size:
+
+```{r}
+x<-rbinom(10,1,prob=0.5) 
+sum(x)/length(x)
+```
+
+We will now get this number using MLE. We do it numerically to illustrate the principle. First, we define a negative log likelihood function for the binomial. Negative because the function we will use to optimize does minimization by default, so we just flip the sign on the log likelihood.
+
+```{r}
+negllbinom <- function(p, x){ 
+  -sum(dbinom(x, size = 1, prob = p,log=T)) 
+}
+```
+
+Then we run the optimization function:
+
+```{r}
+optimize(negllbinom, 
+         interval = c(0, 1), 
+         x = x) 
+```
+
+#### Two-parameter case
+
+Here is an example of MLE using R. Note that in this example, we could have analytically figured out the MLEs. Instead, we are doing this numerically. The advantage of the numerical approach becomes obvious  when the analytical way is closed to us. 
+
+Assume that you have some data that was generated from a normal distribution, with mean 500, and standard deviation 50. Let's say you have 100 data points.
+
+```{r}
+data<-rnorm(100,mean=500,sd=50)
+```
+
+Let's assume we don't know what the mean and standard deviation are. 
+Now, of course you know how to estimate these using the standard formulas. 
+But right now we are going to estimate them using MLE. 
+
+We first write down the negation of the log likelihood function. We take the negation because the optimization function we will be using (see below) does minimization by default, so to get the maximum with the default setting, we just change the sign. 
+
+The function \texttt{nllh.normal} takes a vector \texttt{theta} of parameter values, and a data frame \texttt{data}. 
+
+```{r}
+nllh.normal<-function(theta,data){ 
+  ## decompose the parameter vector to
+  ## its two parameters:
+  m<-theta[1] 
+  s<-theta[2] 
+  ## read in data
+  x <- data
+  n<-length(x) 
+  ## log likelihood:  
+  logl<- sum(dnorm(x,mean=m,sd=s,log=TRUE))
+  ## return negative log likelihood:
+  -logl
+  }
+```
+
+Here is the negative log lik for mean = 40, sd 4, and for mean = 800 and sd 4:
+
+```{r}
+nllh.normal(theta=c(40,4),data)
+
+nllh.normal(theta=c(800,4),data)
+```
+
+As we would expect, the negative log lik for mean 500 and sd 50 is much smaller (due to the sign change) than the two log liks above:
+
+```{r}
+nllh.normal(theta=c(500,50),data)
+```
+
+Basically, you could sit here forever, playing with combinations of values for mean and sd to find the combination that gives the optimal log likelihood. R has an optimization function that does this for you. We have to specify some sensible starting values:
+
+```{r}
+opt.vals.default<-optim(theta<-c(700,40),nllh.normal,
+      data=data,
+      hessian=TRUE)
+```
+
+Finally, we print out the estimated parameter values that maximize the likelihood:
+
+```{r}
+(estimates.default<-opt.vals.default$par)
+```
+
+And we compute standard errors by taking the square root of the diagonals of the Hessian computed by the optim function:
+
+```{r}
+(SEs.default<-sqrt(diag(solve(opt.vals.default$hessian))))
+```
+
+These values match our standard calculations:
+
+```{r}
+### compute estimated standard error from data:
+sd(data)/sqrt(100)
+```
+
+
