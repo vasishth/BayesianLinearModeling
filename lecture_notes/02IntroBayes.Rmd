@@ -53,7 +53,7 @@ Note that the likelihood $L(\theta; \hbox{data})$ (our data is fixed) is proport
 \hbox{Posterior} \propto \hbox{Likelihood}\times \hbox{Prior}
 \end{equation}
 
-Our central goal is going to be to derive the posterior distribution and then summarize its properties (mean, median, 95\% credible interval, etc.). As Christiansen et al say on p.\ 31 of their book, ``To a Bayesian, the best information one can ever have about $\theta$ is to know the posterior density.'' 
+Our central goal is going to be to derive the posterior distribution and then summarize its properties (mean, median, 95\% credible interval, etc.). 
 
 Usually, we don't need the normalizing constant to understand the properties of the posterior distribution. That's why Bayes' theorem is often stated in terms of the proportionality shown above. 
 
@@ -66,9 +66,9 @@ Given the likelihood $f(x\mid \theta)$, if the prior $f(\theta)$ results in a po
 \end{quote}
 
 
-### Example 1: Binomial Likelihood, Beta prior, Beta posterior 
+## Example 1: Binomial Likelihood, Beta prior, Beta posterior 
 
-This is a contrived example, just meant to  provide us with an entry point into Bayesian data analysis. Suppose that an individual with aphasia answered 46 out of 100 questions correctly in a particular sentence comprehension task. The research question is, what is the probability that their average response is greater than 0.5, i.e., above chance.
+This is a contrived example, just meant to  provide us with a smooth entry into Bayesian data analysis. Suppose that an individual with aphasia answered 46 out of 100 questions correctly in a particular sentence comprehension task. The research question is, what is the probability that their average response is greater than 0.5, i.e., above chance.
 
 The likelihood function will tell us $P(\hbox{data}\mid \theta)$:
 
@@ -82,30 +82,15 @@ Note that
 P(\hbox{data}\mid \theta) \propto \theta^{46} (1-\theta)^{54}
 \end{equation}
 
-So, to get the posterior, we just need to work out a prior distribution $f(\theta)$. **Note that we use $\theta$ and p interchangeably when talking about the probability parameter for the binomial.** We will correct this in a future edition of these notes.
-<--! to-do-->
+So, to get the posterior, we just need to work out a prior distribution $f(\theta)$. 
 
 \begin{equation}
 f(\theta\mid \hbox{data}) \propto f(\hbox{data}\mid \theta) f(\theta)
 \end{equation}
 
-For the prior, we need a distribution that can represent our uncertainty about the probabiliy p of success. The Beta distribution (a generalization of the continuous uniform distribution) is commonly used as prior for proportions. We say that the Beta distribution is conjugate to the binomial density; i.e., the two densities have similar functional forms.
+For the prior, we need a distribution that can represent our uncertainty about the probabiliy $\theta$ of success. The Beta distribution is commonly used as prior for proportions. We say that the Beta distribution is conjugate to the binomial density; i.e., the two densities have similar functional forms.
 
-The pdf is\footnote{Incidentally, there is a connection between the beta and the gamma:
-
-\begin{equation*}
-B(a,b) = \int_0^1 x^{a-1}(1-x)^{b-1}\, dx = \frac{\Gamma(a)\Gamma(b)}{\Gamma(a+b)}  
-\end{equation*}
-
-\noindent
-which allows us to rewrite the beta PDF as
-
-\begin{equation}
-f(x)=\frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)}\, x^{a-1}(1-x)^{b-1},\quad 0 < x < 1.
-\end{equation}
-
-Here, $x$ refers to the probability $p$.
-}
+The pdf is
 
 
 \begin{equation*}
@@ -132,9 +117,9 @@ The mean and variance are
 E[X]=\frac{a}{a+b}\mbox{ and }Var(X)=\frac{ab}{\left(a+b\right)^{2}\left(a+b+1\right)}.
 \end{equation}
 
-The Beta distribution's parameters a and b can be interpreted as (our beliefs about) prior successes and failures, and are called \textbf{hyperparameters}. Once we choose values for a and b, we can plot the Beta pdf. Here, I show the Beta pdf for three sets of values of a,b:
+The Beta distribution's parameters a and b can be interpreted as (our beliefs about) prior successes and failures, and are called \textbf{hyperparameters}. Once we choose values for a and b, we can plot the Beta pdf. Here, we show the Beta pdf for three sets of values of a,b:
 
-```{r,betas,fig.lab="\\label{fig:betaeg}Examples of the beta distribution with different parameter values."}
+```{r,betas,fig.cap="\\label{fig:betaeg}Examples of the beta distribution with different parameter values."}
 plot(function(x) 
   dbeta(x,shape1=1,shape2=1), 0,1,
       main = "Beta density",
@@ -152,13 +137,13 @@ plot(function(x)
 text(.5,2.6,"a=6,b=6")
 ```
 
-As the figure shows, as the a,b values are increased, the spread decreases.
+As Figure \ref{fig:betaeg} shows, as the a,b values are increased, the spread decreases.
 
-If we don't have much prior information, we could use a=b=1; this gives us a uniform prior; this is called an uninformative prior or non-informative prior (although having no prior knowledge is, strictly speaking, not uninformative). If we have a lot of prior knowledge and/or a strong belief that p has a particular value, we can use a larger a,b to reflect our greater certainty about the parameter. Notice that the larger our parameters a and b, the narrower the spread of the distribution; this makes sense because a larger sample size (a greater number of successes a, and a greater number of failures b) will lead to more precise estimates.
+If we don't have much prior information, we could use a=b=1; this gives us a uniform prior; this is called an uninformative prior or non-informative prior (although having no prior knowledge is, strictly speaking, not uninformative). If we have a lot of prior knowledge and/or a strong belief that $\theta$ has a particular value, we can use a larger a,b to reflect our greater certainty about the parameter. Notice that the larger our parameters a and b, the narrower the spread of the distribution; this makes sense because a larger sample size (a greater number of successes a, and a greater number of failures b) will lead to more precise estimates.
 
-The central point is that the Beta distribution can be used to define the prior distribution of p.
+The central point is that the Beta distribution can be used to define the prior distribution of $\theta$.
 
-Just for the sake of argument, let's take four different beta priors, each reflecting increasing certainty. 
+Just for the sake of illustration, let's take four different beta priors, each reflecting increasing certainty. 
 
 \begin{enumerate}
 \item 
@@ -171,7 +156,7 @@ Beta(a=6,b=6)
 Beta(a=21,b=21)
 \end{enumerate}
 
-Each reflects a belief that p=0.5, with varying degrees of (un)certainty. Now we just need to plug in the likelihood and the prior:
+Each reflects a belief that $\theta=0.5$, with varying degrees of (un)certainty. Now we just need to plug in the likelihood and the prior:
 
 \begin{equation}
 f(\theta\mid \hbox{data}) \propto f(\hbox{data}\mid \theta) f(\theta)
@@ -180,7 +165,7 @@ f(\theta\mid \hbox{data}) \propto f(\hbox{data}\mid \theta) f(\theta)
 The four corresponding posterior distributios would be:
 
 \begin{equation}
-f(\theta\mid \hbox{data}) \propto [p^{46} (1-p)^{54}] [p^{2-1}(1-p)^{2-1}] = p^{47} (1-p)^{55}
+f(\theta\mid \hbox{data}) \propto [\theta^{46} (1-\theta)^{54}] [\theta^{2-1}(1-\theta)^{2-1}] = \theta^{47} (1-\theta)^{55}
 \end{equation}
 
 \begin{equation}
@@ -188,14 +173,14 @@ f(\theta\mid \hbox{data}) \propto [p^{46} (1-p)^{54}] [p^{3-1}(1-p)^{3-1}] = p^{
 \end{equation}
 
 \begin{equation}
-f(\theta\mid \hbox{data}) \propto [p^{46} (1-p)^{54}] [p^{6-1}(1-p)^{6-1}] = p^{51} (1-p)^{59}
+f(\theta\mid \hbox{data}) \propto [\theta^{46} (1-\theta)^{54}] [\theta^{6-1}(1-\theta)^{6-1}] = \theta^{51} (1-\theta)^{59}
 \end{equation}
 
 \begin{equation}
-f(\theta\mid \hbox{data}) \propto [p^{46} (1-p)^{54}] [p^{21-1}(1-p)^{21-1}] = p^{66} (1-p)^{74}
+f(\theta\mid \hbox{data}) \propto [\theta^{46} (1-\theta)^{54}] [\theta^{21-1}(1-\theta)^{21-1}] = \theta^{66} (1-\theta)^{74}
 \end{equation}
 
-We can now visualize each of these triplets of priors, likelihoods and posteriors. Note that I use the beta to model the likelihood because this allows me to visualize all three (prior, lik., posterior) in the same plot. The likelihood function is actually:
+We can now visualize each of these triplets of priors, likelihoods and posteriors. Note that I use the beta to model the likelihood because this allows me to visualize all three (prior, lik., posterior) in the same plot. The likelihood function is actually as shown in Figure \ref{fig:binomplot}:
 
 ```{r,binomlik,fig.cap="\\label{fig:binomplot}Binomial likelihood function."}
 theta=seq(0,1,by=0.01)
@@ -204,7 +189,7 @@ plot(theta,dbinom(x=46,size=100,prob=theta),
      type="l",main="Likelihood")
 ```
 
-We can represent the likelihood in terms of the beta as well:
+We can represent the likelihood in terms of the Beta as well, as shown in Figure \ref{fig:betaforbinom}:
 
 ```{r,binomasbeta,fig.cap="\\label{fig:betaforbinom}Using the beta distribution to represent a binomial."}
 plot(function(x) 
@@ -213,7 +198,7 @@ plot(function(x)
 ```
 
 
-### Example 2: Poisson Likelihood, Gamma prior, Gamma posterior
+## Example 2: Poisson Likelihood, Gamma prior, Gamma posterior
 
 
 This is also a contrived example. Suppose we are modeling the number of times that a 
@@ -240,7 +225,7 @@ $a=100\times b=225\times b^2$ or $100=225\times b$, i.e.,
 $b=\frac{100}{225}$.
 
 This means that $a=\frac{100\times100}{225}=\frac{10000}{225}$.
-Therefore, the Gamma distribution for the prior is as shown below (also see Fig~\ref{fig1}):
+Therefore, the Gamma distribution for the prior is as shown below (also see Figure \ref{fig1}):
 
 \begin{equation}
 \theta \sim Gamma(\frac{10000}{225},\frac{100}{225})
@@ -276,11 +261,11 @@ L(\mathbf{x}\mid \theta) =& \prod_{i=1}^n \frac{\exp(-\theta) \theta^{x_i}}{x_i!
 we can compute the posterior as follows:
 
 \begin{equation}
-\hbox{Posterior} = [\frac{\exp(-n\theta) \theta^{\sum_i^{n} x_i}}{\prod_{i=1}^n x_i!} ]
-[\frac{b^a \theta^{a-1}\exp(-b\theta)}{\Gamma(a)}]
+\hbox{Posterior} = \left[\frac{\exp(-n\theta) \theta^{\sum_i^{n} x_i}}{\prod_{i=1}^n x_i!} \right]
+\left[\frac{b^a \theta^{a-1}\exp(-b\theta)}{\Gamma(a)}\right]
 \end{equation}
 
-Disregarding the terms $x!,\Gamma(a), b^a$,  which do not involve $\theta$, we have
+We can disregard the terms $x!,\Gamma(a), b^a$,  which do not involve $\theta$, we have
 
 \begin{equation}
 \begin{split}
@@ -309,7 +294,7 @@ We can find a constant $k$ such that the above is a proper probability density f
 Thus, the posterior has the form of  a Gamma distribution with parameters 
 $a^{*}=a+\sum_i^{n} x_i, b^{*}=b+n$. Hence the Gamma distribution is a conjugate prior for the Poisson.
 
-#### Concrete example given data
+### Concrete example given data
 
 Suppose we know that the number of ``the'' utterances is $115, 97, 79, 131$. We can derive the posterior distribution as follows.
 
@@ -343,22 +328,32 @@ new.a<-a.star(10000/225,data)
 new.b<-b.star(100/225,length(data))
 
 ### post. mean
-post.mean<-new.a/new.b 
+(post.mean<-new.a/new.b) 
 ### post. var:
-post.var<-new.a/(new.b^2) 
+(post.var<-new.a/(new.b^2)) 
+```
 
+Now suppose you get one new data point:
+
+```{r}
 new.data<-c(200)
+```
 
+We can compute the parameters of the posterior Gamma distributions using the function we wrote above:
+
+```{r}
 new.a.2<-a.star(new.a,new.data)
 new.b.2<-b.star(new.b,length(new.data))
 
 ### new mean
-new.post.mean<-new.a.2/new.b.2
+(new.post.mean<-new.a.2/new.b.2)
 ### new var:
-new.post.var<-new.a.2/(new.b.2^2)
+(new.post.var<-new.a.2/(new.b.2^2))
 ```
 
-#### The posterior is a weighted mean of prior and likelihood
+Thus, new data can be used with the previous posterior distribution as prior, to compute the new posterior.
+
+### The posterior is a weighted mean of prior and likelihood
 
 We can express the posterior mean as a weighted sum of the prior mean and the maximum likelihood estimate of $\theta$.
 
@@ -412,10 +407,159 @@ Regarding variance, since the variance of the posterior is:
 \end{equation}
 
 as $n$ approaches infinity, the posterior variance will approach zero: more data will reduce variance (uncertainty). 
+
+## Summary
  
- ## Summary
+ We saw two examples where we can do the computations to derive the posterior using simple algebra. There are several other such simple cases. However, in realistic data analysis settings, we cannot specify the posterior distribution as a particular density. For such cases, we need to use MCMC sampling techniques so that we can sample from the posterior distribution.
  
- We saw two examples where we can do the computations to derive the posterior using simple algebra. There are several other such simple cases. However, in realistic data analysis settings, we cannot specify the posterior distribution as a particular density. For such cases, we need to use computer software so that we can sample from the posterior distribution.
+## MCMC sampling
+ 
+### The inversion method for sampling
+ 
+ This method works when we know the closed form of the pdf we want to simulate from and can derive the inverse of that function.
+
+Steps:
+
+
+\begin{enumerate}
+\item Sample one number $u$ from $Unif(0,1)$. Let $u=F(z)=\int_L^z f(x)\, dx $ (here, $L$ is the lower bound of the pdf f).
+\item Then $z=F^{-1}(u)$ is a draw from $f(x)$.
+\end{enumerate}
+
+#### Example
+
+let $f(x) = \frac{1}{40} (2x + 3)$, with $0<x<5$. We have to draw a number from the uniform distribution and then solve for z, which amounts to finding the inverse function:
+
+\begin{equation}
+u = \int_0^z \frac{1}{40} (2x + 3)
+\end{equation}
+
+```{r}
+u<-runif(1000,min=0,max=1) 
+
+z<-(1/2) * (-3 + sqrt(160*u +9))
+```
+
+This method can't be used if we can't find the inverse, and it can't be used with multivariate distributions.
+
+### Gibbs sampling
+
+Gibbs sampling is a very commonly used method in Bayesian statistics.
+
+Let $\Theta$ be a vector of parameter values, let length of $\Theta$ be $k$. Let $j$ index the $j$-th iteration.
+
+Algorithm:
+
+\begin{enumerate}
+\item Assign some starting values to $\Theta$:
+
+$\Theta^{j=0} \leftarrow S$
+
+\item 
+Set $j \leftarrow j + 1$
+\item 
+\begin{enumerate}
+\item[1.] Sample $\theta_1^j \mid \theta_2^{j-1}\dots \theta_k^{j-1}$.
+\item[2.] Sample $\theta_2^j \mid \theta_1^{j}\theta_3^{j-1}\dots \theta_k^{j-1}$.
+
+\vdots
+
+\item[k.] Sample $\theta_k^{j} \mid \theta_1^{j}\dots \theta_{k-1}^{j}$.
+\end{enumerate}
+\item
+Return to step 1.
+\end{enumerate}
+
+#### Example: A simple bivariate distribution
+
+\begin{equation}
+f(x,y)= \frac{1}{28}(2x + 3y + 2)
+\end{equation}
+
+Using the results discussed in the Foundations chapter, it is possible to analytically work out the conditional distributions:
+
+\begin{equation}
+f(x\mid y)=  \frac{f(x,y)}{f(y)}= \frac{(2x + 3y + 2)}{6y+8}
+\end{equation}
+
+\begin{equation}
+f(y\mid x)=  \frac{f(x,y)}{f(x)}= \frac{(2x + 3y + 2)}{4y+10}
+\end{equation}
+
+The Gibbs sampler algorithm is: 
+
+\begin{enumerate}
+\item
+Set starting values for the two parameters $x=-5, y=-5$. Set j=0.
+\item
+Sample $x^{j+1}$ from $f(x\mid y)$ using inversion sampling. You need to work out the inverse of $f(x\mid y)$ and $f(y\mid x)$ first.
+To do this, for $f(x\mid u)$, we have 
+find $z_1$:
+
+\begin{equation}
+u = \int_0^{z_1} \frac{(2x + 3y + 2)}{6y+8}\, dx
+\end{equation}
+
+And for $f(y\mid x)$, we have to find $z_2$:
+
+\begin{equation}
+u = \int_0^{z_2} \frac{(2x + 3y + 2)}{4y+10} \, dy
+\end{equation}
+
+I leave that as an exercise; the solution is given in the code below.
+\end{enumerate}
+
+```{r}
+#R program for Gibbs sampling using inversion method 
+## program by Scott Lynch, modified by SV:
+x<-rep(NA,2000)
+y<-rep(NA,2000) 
+x[1]<- -5
+y[1]<- -5
+
+for(i in 2:2000)
+{ #sample from x | y 
+  u<-runif(1,min=0, max=1) 
+  x[i]<-sqrt(u*(6*y[i-1]+8)+(1.5*y[i-1]+1)*(1.5*y[i-1]+1))-
+    (1.5*y[i-1]+1) 
+  #sample from y | x
+u<-runif(1,min=0,max=1) 
+y[i]<-sqrt((2*u*(4*x[i]+10))/3 +((2*x[i]+2)/3)*((2*x[i]+2)/3))- 
+    ((2*x[i]+2)/3)
+}
+```
+
+You can run this code to visualize the simulated posterior distribution. See Figure \ref{fig:posteriorbivariateexample}.
+
+```{r fig.cap="\\label{fig:posteriorbivariateexample}Example of posterior distribution of a bivariate distribution."}
+library(MASS)
+bivar.kde<-kde2d(x,y)
+persp(bivar.kde,phi=10,theta=90,shade=0,border=NA,
+      main="Simulated bivariate density using Gibbs sampling")
+```
+
+
+A central insight here is that knowledge of the conditional distributions is enough to simulate from the joint distribution, provided such a joint distribution exists. 
+
+## Hamiltonian Monte Carlo
+
+Instead of Gibbs sampling, Stan uses this more efficient sampling approach. HMC works well for the high-dimensional models we will fit (hierarchical models).
+
+A good reference explaining HMC is @neal2011mcmc. However, this paper is technically very demanding. More intuitively accessible introductions are available via  Michael Betancourt's home page: https://betanalpha.github.io/.
+
+For our purposes, it is enough to know what sampling using MCMC is, and that HMC gives us posterior samples efficiently.
+
+
+## Further readings
+
+Some good books introducing Bayesian data analysis methods are the following:
+
+  - McElreath, R. (2015). Statistical Rethinking. Texts in Statistical Science.
+This book assumes no calculus or linear algebra knowledge.
+
+  - Kruschke, J. (2014). Doing Bayesian data analysis: A tutorial with R, JAGS, and Stan. Academic Press. This book is specifically designed for a psychology audience. 
+
+  - Lynch, S. M. (2007). Introduction to applied Bayesian statistics and estimation for social scientists. Springer Science & Business Media. This book assumes knowledge of calculus and linear algebra.
 
 \newpage
 
@@ -490,14 +634,5 @@ legend(0.1,6,legend=c("post","lik","prior"),
 \end{enumerate}
 \end{qbox}
 
-\newpage
 
-## Further readings
 
-Some good books introducing Bayesian data analysis methods are the following:
-
-  - Lynch, S. M. (2007). Introduction to applied Bayesian statistics and estimation for social scientists. Springer Science & Business Media.
-
-  - McElreath, R. (2015). Statistical Rethinking. Texts in Statistical Science.
-
-  - Kruschke, J. (2014). Doing Bayesian data analysis: A tutorial with R, JAGS, and Stan. Academic Press.
