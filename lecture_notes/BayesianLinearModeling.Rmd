@@ -1,7 +1,7 @@
 ---
-subtitle: "University of Potsdam, Germany"
-title: "Bayesian Linear Modeling: Lecture Notes"
-author: "Shravan Vasishth and Bruno Nicenboim"
+subtitle: "Lecture notes for MSc Cognitive Science and MSc Linguistics, University of Potsdam, Germany"
+title: "Bayesian Linear Modeling: An  introduction using brms and rstan"
+author: "Shravan Vasishth (with contributions by Bruno Nicenboim)"
 date: "`r Sys.Date()`"
 header-includes:
    - \usepackage{todonotes}
@@ -20,7 +20,7 @@ output:
   pdf_document: 
     fig_caption: yes
     keep_tex: true
-    latex_engine: xelatex
+    latex_engine: pdflatex
     toc: true
     number_sections: true
     toc_depth: 6
@@ -40,6 +40,8 @@ knitr::opts_chunk$set(tidy = T,cache=T, autodep=TRUE,tidy.opts=list(width.cutoff
 options(htmltools.dir.version = FALSE)
 options(scipen=999, digits=3)
 library(ggplot2)
+library(brms)
+library(rstan)
 theme_set(theme_classic()) 
 ```
 \newpage
@@ -58,6 +60,5 @@ theme_set(theme_classic())
 ```
 
 \newpage
-
 
 # References
