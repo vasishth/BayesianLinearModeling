@@ -1,10 +1,23 @@
 # Linear modeling 
 
-## A simple example \label{sec:first}
+Recall from the foundations chapter that 
+the way we will conduct data analysis is as follows. 
+
+  - Given data, specify a *likelihood function*.
+  - Specify *prior distributions* for model parameters.
+  - Using software, derive *marginal posterior distributions* for parameters given likelihood function and prior density.
+  - Simulate parameters to get *samples from posterior distributions* of parameters using some *Markov Chain Monte Carlo (MCMC) sampling algorithm*.
+  - Evaluate whether model makes sense, using *model convergence* diagnostics, 
+  fake-data simulation, *prior predictive* and *posterior predictive* checks, and (if you want to claim a discovery) calibrating true and false discovery rates.
+  - Summarize *posterior distributions* of parameter samples and make your scientific decision.
+
+We will now work through some specific examples to illustrate how the data analysis process works.
+
+## Example 1: A single subject pressing a button repeatedly \label{sec:first}
 
 As a first example, we will fit a simple linear model to some reaction time data.
 
-First, load the brms library:
+First, load the brms package. For an introduction to this package, see @brms. 
 
 ```{r}
 library(brms)
@@ -15,7 +28,8 @@ The file \verb|button_press.dat| contains data of a subject pressing the space b
 ### Preprocessing of the data
 
 ```{r, reading_noreading}
-noreading_data <- read.table(header = F,"data/button_press.dat",encoding="latin1")
+noreading_data <- read.table(header = F,"data/button_press.dat",
+                             encoding="latin1")
 noreading_data <- noreading_data[c("V2","V3","V5","V6","V8")]
 colnames(noreading_data) <- c("type","item","wordn","word","RT")
 tail(noreading_data)
@@ -23,14 +37,24 @@ summary(noreading_data$RT)
 class(noreading_data)
 ```
 
-### Probability model
+### Visualizing the data
 
+It is a good idea to look at the distribution of the data before doing anything else. See Figure \ref{fig:m1visualize}.
+
+```{r fig.cap="\\label{fig:m1visualize}Visualizing the data."}
+plot(density(noreading_data$RT),
+     main="Button-press data",xlab="RT")
+```
+
+The data looks a bit skewed, but we ignore this for the moment.
+
+### Probability model
 
 Let's model the data with the following assumptions:
 
 - There is a true underlying time, $\mu$, that the participant needs to press the space-bar.
 - There is some noise in this process.
-- The noise is normally distributed.
+- The noise is normally distributed (this assumption is questionable given the skew).
 
 This means that the likelihood for each observation $i$ will be:
 
@@ -40,9 +64,13 @@ y_i \sim Normal(\mu, \sigma)
 \end{aligned}
 \end{equation}
 
-where $i =1 \ldots N$
+where $i =1 \ldots N$.
 
-And we are going to use the following priors:
+This is just the simple linear model:
+
+$y = \mu + \varepsilon \hbox{ where } \varepsilon \sim Normal(0,\sigma)$
+
+We are going to use the following priors for the two parameters in this model:
 \begin{equation}
 \begin{aligned}
 \mu &\sim Normal(0, 2000) \\
@@ -75,15 +103,35 @@ priors <- c(set_prior("normal(0, 2000)",
 
 Then, define the generative process assumed:
 
-```{r}
-m<-brm(RT~1,noreading_data,prior = priors,
-       iter = 2000, chains = 4,family = gaussian(), 
+```{r cache=TRUE,warning=FALSE,message=FALSE,results="hide"}
+m1<-brm(RT~1,noreading_data,prior = priors,
+       iter = 2000,
+       warmup = 1000,
+       chains = 4,
+       family = gaussian(), 
        control = list(adapt_delta = 0.99))
 ```
 
+\begin{enumerate}
+\item
+The term \texttt{family~=~gaussian()} makes explicit the underlying likelihood function that is implicit in \texttt{lme4}. Other linking functions are possible, exactly as in the \texttt{glmer} function in \texttt{lme4}.
+\item
+The term \texttt{prior} takes as argument the list of priors we defined in Listing~\ref{fig:priors}. Although this specification of priors is optional, the  researcher should always explicitly specify each prior. Otherwise, \texttt{brms} will define a prior by default, which may or may not be appropriate for the research area. We return to this point below.
+\item 
+The term \texttt{iter} refers to the number of iterations  that the sampler makes to sample from the posterior distribution of each parameter (by default 2000).
+\item 
+The term \texttt{warmup} refers to the number of iterations from the start of sampling that are eventually discarded (by default half of \texttt{iter}).
+\item 
+The term 
+\texttt{chains} refers to the number of independent runs for sampling (by default four).
+\item
+The term \texttt{control} refers to some optional control parameters for the sampler, such as \texttt{adapt\_delta}, \texttt{max\_treedepth}, and so forth.
+\end{enumerate}
+
+
 ### Summarizing the posteriors, and convergence diagnostics
 
-The summary displayed below includes means,  standard  deviations  (`sd`),  quantiles,  Monte
+The summary displayed below show summary statistics over the marginal posterior distributions of the parameters in the model. The summary shows posterior means,  standard  deviations  (`sd`),  quantiles,  Monte
 Carlo standard errors (`se_mean`), split Rhats, and effective sample sizes (`n_eff`).  
 
 The summaries
@@ -91,22 +139,24 @@ are computed after removing the warmup  and merging together all chains. Notice 
 
 
 ```{r}
-summary(m)
+summary(m1)
 ```
 
-Graphical summary of posterior distributions:
+A graphical summary of posterior distributions of model m1 is shown in Figure \ref{fig:m1stanplot}:
 
-```{r}
-stanplot(m,type="hist")
+```{r fig.cap="\\label{fig:m1stanplot}Posterior distributions of the parameters in model m1."}
+stanplot(m1,type="hist")
 ```
 
-Trace plots:
+The trace plots in Figure \ref{fig:m1traceplot} show how well the four chains are mixing:
 
-```{r}
-stanplot(m,type="trace")
+```{r fig.cap="\\label{fig:m1traceplot}Trace plots in model m1."}
+stanplot(m1,type="trace")
 ```
 
-### Validating model using fake data simulation
+### Validating model using fake-data simulation
+
+An important way to check that the model can recover the true parameters is by using fake-data simulation [@GelmanEtAl2014].
 
 ```{r, fake_data}
 set.seed(123)
@@ -120,9 +170,9 @@ fake_data <- data.frame(RT=RT)
 ```
 
 
-```{r fit_fake, message=FALSE, warning=FALSE, results="hide"}
+```{r fit_fake, message=FALSE, warning=FALSE, results="hide",cache=TRUE}
 
-m_fake<-brm(RT~1,fake_data,prior = priors,
+m1_fake<-brm(RT~1,fake_data,prior = priors,
        iter = 2000, chains = 4,family = gaussian(), 
        control = list(adapt_delta = 0.99))
 ```
@@ -130,13 +180,15 @@ m_fake<-brm(RT~1,fake_data,prior = priors,
 The model recovers the parameters:
 
 ```{r}
-summary(m_fake)
+summary(m1_fake)
 ```
-You should also check the trace plots to confirm that the model converged.
+You should also check through trace plots that the chains are mixing properly, and you should also plot the posterior distributions of the parameters.
 
 ## MCMC diagnostics: Convergence problems and Stan warnings
 
-Before inferring anything from a model, we need to assess convergence. The most important checks or MCMC diagnostics are the following:
+Because we are using numerical methods to sample from the posterior distributions, we need to make sure that the model is able to sample from the posterior.
+
+The most important checks or MCMC diagnostics are the following:
 
 
 * The chains should look like a straight "fat hairy caterpillar": the chains should
@@ -165,7 +217,7 @@ These issues **should not be ignored**! See the Appendix \ref{sec:Appendix} for 
 
 ```{r}
 hist(RT)
-stanplot(m_fake,type="hist",pars="b_Intercept")
+stanplot(m1_fake,type="hist",pars="b_Intercept")
 ```
 
 We are assuming that there's a true underlying time it takes to press the space bar, $\mu$, and there is normally distributed noise that generates the different RTs. This is encoded in our likelihood by assuming that RTs are distributed with an unknown true mean $\mu$ (and an unknown standard deviation $\sigma$). The objective of the Bayesian model is to learn about the possible values of $\mu$, or in other words, to get a distribution that encodes what we know about the true mean of the distribution of RTs (and also another distribution that encodes what we know about true standard deviation, $\sigma$, of the distribution of RTs.)
@@ -211,7 +263,7 @@ priors <- c(set_prior("uniform(0, 5000)",
                       class = "sigma"))
 ```
 
-```{r}
+```{r cache=TRUE}
 m<-brm(RT~1,noreading_data,prior = priors,
        iter = 2000, chains = 4,family = gaussian(), 
        control = list(adapt_delta = 0.99))
@@ -296,7 +348,7 @@ priors <- c(set_prior("normal(0, 2000)",
                       class = "sigma"))
 ```
 
-```{r}
+```{r cache=TRUE}
 m<-brm(RT~1+presses,noreading_data,prior = priors,
        iter = 2000, chains = 4,family = gaussian(), 
        control = list(adapt_delta = 0.99))
@@ -477,7 +529,7 @@ priors_log <- c(set_prior("normal(0, 10)",
                       class = "sigma"))
 ```
 
-```{r}
+```{r cache=TRUE}
 m_logn<-brm(RT~1+presses,noreading_data,prior = priors_log,
        iter = 2000, chains = 4,family = lognormal(), 
        control = list(adapt_delta = 0.99,max_treedepth=15))
