@@ -3,58 +3,61 @@
 
 ## Introduction
 
-The basic idea we will explore in this course is
-Bayes' theorem, which, as Lunn et al 2012 
-put it, 
-allows us to learn from experience and turn a prior distribution into a posterior distribution, given data.
+### Intended audience and prerequisites
 
-A central departure from frequentist methodology is that the unknown population parameter is expressed as a random variable. For example, we can talk about how sure we are that the population parameter has a particular value, and this uncertainty is subjective. In the frequentist case, the unknown population parameter is a point value; in the frequentist world, you cannot talk about how sure you are that a parameter has value $\theta$.
+This course is intended for **graduate students** in all relevant MSc progams related to Cognitive Science at the University of Potsdam, Germany. At the time of writing, this includes Cognitive Science and Linguistics.  
 
-\textbf{Notational conventions}: A binomial distribution, $n$ trials each with probability $\theta$ of occurring, is written $Bi(\theta,n)$. Given a random variable with this distribution, we can write $R\mid \theta, n \sim Bi(\theta,n)$ or $p(r\mid \theta, n) = Bi(\theta,n)$, where $r$ is the realization of $R$. We can drop the conditioning in $R\mid \theta, n$, so that we can write: given $R\sim Bi(\theta,n)$, what is $Pr(\theta_1 < \theta < \theta_2\mid r, n)$.
+**My teaching philosophy**:
+Because statistics inherently depends on mathematics, it is very important to get a reasonably formal introduction to the topic. The usual, informal manner in which statistics is taught has been a failure in all Cognitive Science disciplines.  We see this in the way statistics is routinely abused in psycholinguistics, psychology, and linguistics, among other areas. Some examples: 
 
-### Steps in Bayesian analysis
-
-\begin{enumerate}
-\item Given data, specify a \textbf{likelihood function}.
-\item Specify \textbf{prior distribution} for model parameters.
-\item Derive \textbf{posterior distribution} for parameters given likelihood function and prior density.
-\item
-Simulate parameters to get \textbf{samples from posterior distribution} of parameters.
-\item 
-Summarize parameter samples.
-\end{enumerate}
-
-### Comparison of Bayesian with frequentist methodology
-
-\begin{enumerate}
-\item In Bayesian data analysis (BDA), the unknown parameter is treated as if it's a random variable, but in reality we are just using a probability density function (pdf) to characterize our uncertainty about parameter values. In frequentist methods, the unknown parameter is a point value. 
-
-\item Frequentists want (and get) $P(data\mid parameters)$, whereas Bayesians want (and get) $P(parameters\mid data)$.
-
-What this means is that frequentists will set up a null hypothesis and then compute the probability of the data given the null (the p-value). The Bayesian obtains the probability of hypothesis of interest (or the null hypothesis) given the data.
-
-
-\item For frequentists, the probability of an event is defined in terms of (hypothetical) long run relative frequencies; so, one cannot talk about the probability of a single event. For Bayesians, a single event is associated with a probability and this probability is subjective: it depends on the observer's beliefs. An example is the familiar one: the probability of a heads in a coin toss. You believe that any coin you pull out of your pocket is fair; that's a subjective belief. 
-From the frequentist viewpoint, the 0.5 probability of a heads is a consequence of long-term relative frequencies under repeated coin tosses.
-\end{enumerate}
-
-
-### Statistics is the inverse of probability
-
-In probability, we are given a probability density or mass function f(x)  (see below), and parameters, and we can deduce the probability of one or more events occurring.
-
-In statistics, we are given a collection of events, and we want to discover the parameters that produced them (assuming f(x) is the pdf that generated the data). The classical frequentist approach is:
-
-\begin{enumerate}
-\item Estimate parameters assuming $X\sim f(x)$.
-\item Do inference.
-\end{enumerate}
+  - deciding that an effect is ``reliable'' if $p<0.05$ in a severely underpowered study; for examples, see @JaegerEtAl2017, @VasishthMertzenJaegerGelman2018.
+  - inconrrectly arguing that the null is true when $p>0.05$, or arguing that the null is false when is a bit over $p>0.05$, but the researcher wants desperately that p be less than 0.05;  for discussion, see @VasishthNicenboimStatMeth, @NicenboimVasishth2016.
+  - flexible data analysis to get the result desired: analyze many dependent measures and choose whichever result you like, ignoring the rest; see @MalsburgAngele2016.
+  - ignore model assumptions, focusing only on p-value; examples are discussed in @VasishthetalPLoSOne2013, @NicenboimRoettgeretal, @VasishthEtAl2017Modelling. 
+  - flexibly change the research question, theory, or predictions after seeing the data; for discussion of the distinction between confirmatory vs exploratory testing, see @NicenboimEtAlCogSci2018.
+ - remove data selectively, or avoid removing it, depending on the desired result (examples will be provided).
  
-For example, for reaction times, we might assume a random variable $X_i$ that has a normal distribution $N(0,\sigma^2)$ (the null hypothesis) as its probability density function. We compute the most likely parameter value that generated the data, the mean of the random variable,\footnote{This is the maximum likelihood estimate.} and compute the probability of observing a value like the mean or something more extreme given the null hypothesis. We can write this statement in short-hand as $P(data\mid parameter)$.
+Yet, most people do not make these mistakes intentionally; I know because I have made them too. For examples of mistakes listed above from my own work, see @vasishthlewisLanguage05, @vasishth:phdbook. 
+
+
+In a modest attempt to at least partly remedy this situation, the present course attempts to provide some understanding of the basic ideas behind statistical modeling. 
+
+One important caveat here is that my own understanding is imperfect; I have studied these topics formally (MSc Statistics, Sheffield, UK), but that doesn't mean I grasp them fully. For deeper study, I recommend going to a Statistics or Math department and learning from professionals there. Meanwhile, if you find mistakes, please open an issue here: https://github.com/vasishth/BayesianLinearModeling. 
+
+I assume here that the graduate student taking this course has elementary numeracy acquired usually at the class 10 level. I generally avoid calculus and linear algebra, and do not require the student to know these topics. Whenever these topics come up, I will explain them just in time. What I do assume is basic algebra, set theory,  and arithmetic ability.
+
+Some very basic knowledge of R is assumed, but not much. If students don't know R, I will provide a quick introduction, although google is one's friend here. 
+
+The basic idea we will explore in this course is: how to 
+use Bayes' theorem for data analysis. In order to understand the methodology, some passive understanding of the following concepts needs to be in place:
+
+  - Very **basic** probability theory
+  - The theory of random variables
+  - Probability mass/density functions
+  - Maximum likelihood estimation
+
+Without a clear understanding of these concepts, it is difficult to figure out how statistical modeling works. 
+
+So we will begin with these concepts. But before we dive in, it may help to know where we are going.
+
+
+### Preview: Steps in Bayesian analysis
+
+The way we will conduct data analysis is as follows. 
+
+  - Given data, specify a *likelihood function*.
+  - Specify *prior distributions* for model parameters.
+  - Using software, derive *marginal posterior distributions* for parameters given likelihood function and prior density.
+  - Simulate parameters to get *samples from posterior distributions* of parameters using some *Markov Chain Monte Carlo (MCMC) sampling algorithm*.
+  - Evaluate whether model makes sense, using *model convergence* diagnostics, 
+  fake-data simulation, *prior predictive* and *posterior predictive* checks, and (if you want to claim a discovery) calibrating true and false discovery rates.
+  - Summarize *posterior distributions* of parameter samples and make your scientific decision.
+
+The above is what you will learn in this course; all the terms introduced above will be explained in these notes. We begin with basic probability theory.
 
 ## Brief review of probability theory
 
-We begin with a review of basic probability theory.
+The best reference textbook I know for s first contact with probability theory is @kerns. My notes below are a bit terse because I am assuming you will look at Kerns if something is unclear.
 
 ### Kolmogorov Axioms of Probability
 
@@ -100,7 +103,7 @@ or:
 P(E^c) = 1-P(E)
 \end{equation}
 
-** Proposition 2** 
+**Proposition 2** 
 
 If $E\subset F$ then $P(E)\leq P(F)$.  
 
@@ -119,7 +122,7 @@ The conditional probability of event $B$ given event $A$, denoted $\mathbb{P}(B\
 \mathbb{P}(B\mid A)=\frac{\mathbb{P}(A\cap B)}{\mathbb{P}(A)},\quad \mbox{if }\mathbb{P}(A)>0.
 \end{equation}
 
-** Theorem **
+**Theorem**
 
 For any fixed event $A$ with $\mathbb{P}(A)>0$,
 
@@ -159,7 +162,7 @@ For any events $A$, $B$, and $C$ with $\mathbb{P}(A)>0$,
 
 ###Independence of events
 
-[Taken nearly verbatim from Kerns.]
+[Taken nearly verbatim from @kerns.]
 
 **Definition**
 
@@ -211,7 +214,7 @@ P(EF^c) =& P(E)[1-P(F)]\\
 
 ### Bayes' rule
 
-[Quoted nearly verbatim from Kerns.]
+[Quoted nearly verbatim from @kerns.]
 
 **Theorem**
 	\textbf{Bayes' Rule}. Let $B_{1}$, $B_{2}$, ..., $B_{n}$ be mutually exclusive and exhaustive and let $A$ be an event with 
@@ -244,7 +247,7 @@ Now remembering that  $\{B_{k}\}$ is a partition (i.e., mutually exclusive and e
 A random variable $X$ is a function $X : S \rightarrow \mathbb{R}$ that associates to each outcome
 $\omega \in S$ exactly one number $X(\omega) = x$.
 
-$S_X$ is all the $x$'s (all the possible values of X, the support of X). I.e., $x \in S_X$. It seems we can also sloppily write $X \in S_X$ (not sure about this). 
+$S_X$ is all the $x$'s (all the possible values of X, the support of X). I.e., $x \in S_X$. We can also sloppily write $X \in S_X$. 
 
 Good example: number of coin tosses till H
 
@@ -254,7 +257,7 @@ Good example: number of coin tosses till H
 	\item $x=0,1,2,\dots; x \in S_X$
 \end{itemize}
 
-Every discrete (continuous) random variable X has associated with it a \textbf{probability mass (distribution)  function (pmf, pdf)}. I.e., PMF is used for discrete distributions and PDF for continuous. (I will sometimes use lower case for pdf and sometimes upper case. Some books, like Christensen et al., use pdf for both discrete and continuous distributions.)
+Every discrete (continuous) random variable X has associated with it a \textbf{probability mass (distribution)  function (pmf, pdf)}. I.e., PMF is used for discrete distributions and PDF for continuous. (I will sometimes use lower case for pdf and sometimes upper case. Some books use pdf for both discrete and continuous distributions.)
 
 \begin{equation}
 p_X : S_X \rightarrow [0, 1] 
@@ -398,7 +401,6 @@ Every continuous random variable $X$ has a probability density function (PDF) de
 	  \begin{equation}
 	  \mathbb{P}(a\leq X\leq b)=\mathbb{P}(a<X\leq b)=\mathbb{P}(a\leq X<b)=\mathbb{P}(a<X<b).
 	  \end{equation}
-\item The PDF $f_{X}$ can sometimes be greater than 1. This is in contrast to the discrete case; every nonzero value of a PMF is a probability which is restricted to lie in the interval $[0,1]$.
 \end{itemize}
 \end{quote}
 
@@ -438,7 +440,7 @@ The density (PDF) is the derivative of the CDF.
 
 ### Some basic results concerning random variables
 
-These are provided only for reference; you won't need to actively use them in this course.
+
 
 \begin{enumerate}
 	\item \begin{equation}
@@ -462,7 +464,7 @@ These are provided only for reference; you won't need to actively use them in th
 	\end{equation}	
 \end{enumerate}
 
-So, so far, we know what a random variable is, and we know that by definition it has a pdf and a cdf associated with it. 
+So far, we have learnt what a random variable is, and we know that by definition it has a pdf and a cdf associated with it. Why did we go through all this effort to learn all this? The payoff becomes apparent next.
 
 ### What you can do with a pdf
 
@@ -505,13 +507,15 @@ For example, take $f(x)$ to be the normal distribution with mean 0 and sd 1. Sup
 
 We can do this in R as follows:\footnote{This is a very important piece of R code here. Make sure you understand the relationship between the integral and the R functions used here.} 
 
-```{r,eval=FALSE}
+\begin{verbatim}
 pnorm(1)-pnorm(0)
-```
+\end{verbatim}
 
 \end{enumerate}
 
-## Six important distributions
+## Seven important distributions
+
+
 
 ### Binomial distribution
 
@@ -521,7 +525,7 @@ If we have $x$ successes in $n$ trials, given a success probability $p$ for each
 P(x\mid n, p) = {n \choose k} p^k (1-p)^{n-k} 
 \end{equation}
 
-[Recall that: ${n \choose k} = \frac{n!}{(n-r)! r!}$]
+[Recall that: ${n \choose k} = \frac{n!}{(n-r)! r!}$. Hence, given $x$ and $n$, this term will be a constant.]
 
 The mean is $np$ and the variance $np(1-p)$.
 
@@ -537,6 +541,8 @@ qbinom(p, size, prob, lower.tail = TRUE, log.p = FALSE)
 ### pseudo-random generation of samples:
 rbinom(n, size, prob)
 \end{verbatim}
+
+\textbf{Notational conventions}: A binomial distribution, $n$ trials each with probability $\theta$ of occurring, is written $Bin(\theta,n)$. Given a random variable with this distribution, we can write $R\mid \theta, n \sim Bin(\theta,n)$ or $p(r\mid \theta, n) = Bin(\theta,n)$, where $r$ is the realization of $R$. We can drop the conditioning in $R\mid \theta, n$, so that we can write: given $R\sim Bin(\theta,n)$, what is $Pr(\theta_1 < \theta < \theta_2\mid r, n)$.
 
 ### Uniform distribution
 
@@ -687,6 +693,83 @@ E[X]=\frac{a}{a+b}\mbox{ and }Var(X)=\frac{ab}{\left(a+b\right)^{2}\left(a+b+1\r
 
 This distribution is going to turn up a lot in Bayesian data analysis.
 
+### Gamma distribution
+
+This is a generalization of the exponential distribution. We say that $X$ has a gamma distribution and write $X\sim\mathsf{gamma}(\mathtt{shape}=\alpha,\,\mathtt{rate}=\lambda)$, where $\alpha>0$ (called shape) and $\lambda>0$ (called rate). It has PDF
+
+\begin{equation*}
+f(x)=  \left\{ 	
+\begin{array}{l l}
+       \frac{\lambda e^{-\lambda x} (\lambda x)^{\alpha - 1}}{\Gamma(\alpha)} & \quad \textrm{if } x \geq 0\\
+       0 & \quad \textrm{if } x < 0.\\
+\end{array} \right.
+\end{equation*}
+
+$\Gamma(\alpha)$ is called the gamma function:
+
+\begin{equation*}
+\Gamma(\alpha) = \int_0^\infty e^{-y}y^{\alpha-1}\, dy = (\alpha -1 )\Gamma(\alpha - 1)
+\end{equation*}
+
+Note that for integral values of $n$, $\Gamma(n)=(n-1)!$ (follows from above equation).
+
+The associated $\mathsf{R}$ functions are \texttt{gamma(x, shape, rate = 1)}, \texttt{pgamma}, \texttt{qgamma}, and \texttt{rgamma}, which give the PDF, CDF, quantile function, and simulate random variates, respectively. If $\alpha=1$ then $X\sim\mathsf{exp}(\mathtt{rate}=\lambda)$. The mean is $\mu=\alpha/\lambda$ and the variance is $\sigma^{2}=\alpha/\lambda^{2}$.
+
+To motivate the gamma distribution recall that if $X$ measures the length of time until the first event occurs in a Poisson process with rate $\lambda$ then $X\sim\mathsf{exp}(\mathtt{rate}=\lambda)$. If we let $Y$ measure the length of time until the $\alpha^{\mathrm{th}}$ event occurs then $Y\sim\mathsf{gamma}(\mathtt{shape}=\alpha,\,\mathtt{rate}=\lambda)$. When $\alpha$ is an integer this distribution is also known as the \textbf{Erlang} distribution.
+
+```{r,gamma,include=FALSE}
+gamma.fn<-function(x){
+	lambda<-1
+	alpha<-1
+	(lambda * exp(1)^(-lambda*x) * 
+	(lambda*x)^(alpha-1))/gamma(alpha)
+}
+```
+
+
+```{r,fig.cap="\\label{gamma}The gamma distribution."}
+x<-seq(0,4,by=.01)
+plot(x,gamma.fn(x),type="l")
+```
+
+The Chi-squared distribution is the gamma distribution with $\lambda=1/2$ and $\alpha=n/2$, where $n$ is an integer:
+
+
+```{r,chisq,include=FALSE}
+gamma.fn<-function(x){
+	lambda<-1/2
+	alpha<-8/2 ## n=4
+	(lambda * (exp(1)^(-lambda*x)) * 
+	(lambda*x)^(alpha-1))/gamma(alpha)
+}
+```
+
+```{r,fig.cap="\\label{chisq}The chi-squared distribution."}
+x<-seq(0,100,by=.01)
+plot(x,gamma.fn(x),type="l")
+```
+
+**Mean and variance of Gamma distribution**
+
+Let $X$ be a gamma random variable with parameters $\alpha$ and $\lambda$. 
+
+\begin{equation*}
+\begin{split}	
+E[X] =& \frac{1}{\Gamma(\alpha)} \int_0^\infty x \lambda e^{-\lambda x} (\lambda x)^{\alpha - 1}\, dx\\  
+     =& \frac{1}{\lambda \Gamma(\alpha)} \int_0^\infty e^{-\lambda x} (\lambda x)^{\alpha}\, dx\\
+     =& \frac{\Gamma(\alpha+1)}{\lambda \Gamma(\alpha)}\\
+     =& \frac{\alpha}{\lambda} \quad \textrm{see derivation of $\Gamma(\alpha), p.\ 215$  of Ross}
+\end{split}
+\end{equation*}
+
+It is easy to show (exercise) that
+
+\begin{equation*}
+Var(X)=\frac{\alpha}{\lambda^2}	
+\end{equation*}
+
+
+
 ### $t$ distribution
 
 A random variable $X$ with PDF
@@ -739,7 +822,6 @@ By interchanging the roles of $X$ and $Y$ it is clear that
 f_{Y}(y)=\sum_{x\in S_{X}}f_{X,Y}(x,y).\label{eq-marginal-pmf}
 \end{equation}
 Given the joint PMF we may recover the marginal PMFs, but the converse is not true. Even if we have \textbf{both} marginal distributions they are not sufficient to determine the joint PMF; more information is needed.
-%\footnote{We are not at a total loss, however. There are Frechet bounds which pose limits on how large (and small) the joint distribution must be at each point.}
 
 Associated with the joint PMF is the \textbf{joint cumulative distribution function} $F_{X,Y}$ defined by
 \[
@@ -908,7 +990,7 @@ This is because $\frac{6}{5}\left(x+y^{2}\right)$ cannot be stated as a product 
 
 ### Sums of independent random variables
 
-[Taken nearly verbatim from Ross.]
+[Taken nearly verbatim from @Ross.]
 
 Suppose that X and Y are
 independent, continuous random variables having probability density functions $f_X$
@@ -978,11 +1060,11 @@ If $X$ and $Y$ are independent then
 p_{X\mid Y}(x\mid y) = P(X=x)=p_X(x)	
 \end{equation}
 
-See the examples starting p.\ 264 of Ross.
+See the examples starting p.\ 264 of @Ross.
 
 #### Continuous case
 
-[Taken almost verbatim from Ross.]
+[Taken almost verbatim from @Ross.]
 
 If $X$ and $Y$ have a joint probability density function $f(x, y)$, then the conditional probability density function of $X$ given that $Y = y$ is defined, for all values of $y$ such that $f_Y(y) > 0$,by
 
@@ -1002,7 +1084,7 @@ f_{X\mid Y}(x\mid y)\, dx =& \frac{f(x,y)}{f_Y(y)} \frac{dxdy}{dy}\\
 \end{equation}
 
 
-### Covariance and correlation
+##Covariance and correlation
 
 There are two very special cases of joint expectation: the \textbf{covariance} and the \textbf{correlation}. These are measures which help us quantify the dependence between $X$ and $Y$. 
 
@@ -1020,7 +1102,7 @@ Shortcut formula for covariance:
 \mbox{Cov}(X,Y)=\mathbb{E}(XY)-(\mathbb{E} X)(\mathbb{E} Y).
 \end{equation}
 
-The \textbf{Pearson product moment correlation} between $X$ and $Y$ is the covariance between $X$ and $Y$ rescaled to fall in the interval $[-1,1]$. It is formally defined by 
+\textbf{The Pearson product moment correlation} between $X$ and $Y$ is the covariance between $X$ and $Y$ rescaled to fall in the interval $[-1,1]$. It is formally defined by 
 \begin{equation}
 \mbox{Corr}(X,Y)=\frac{\mbox{Cov}(X,Y)}{\sigma_{X}\sigma_{Y}}.
 \end{equation}
@@ -1036,6 +1118,54 @@ The correlation is usually denoted by $\rho_{X,Y}$ or simply $\rho$ if the rando
 
 This is a very important distribution that we will need in linear mixed models.
 
+#### Graphical intuition
+
+If we have two independent random variables U0, U1, and we examine their joint distribution, we can plot a 3-d plot which shows, u0, u1, and f(u0,u1). 
+
+*Bivariate distribution with no  correlation (independent random variables)*:
+E.g., 
+$u0 \sim N(0,1)$ and 
+$u1 \sim N(0,1)$, 
+with two independent random variables.  See Figure \ref{fig:bivarindep}.
+
+
+```{r}
+library(mvtnorm)
+u0 <- u1 <- seq(from = -3, to = 3, length.out = 30)
+Sigma1<-diag(2)
+f <- function(u0, u1) dmvnorm(cbind(u0, u1), mean = c(0, 0),sigma = Sigma1)
+z <- outer(u0, u1, FUN = f)
+```
+
+```{r fig.fullwidth=TRUE,fig.cap="\\label{fig:bivarindep}Visualization of two uncorrelated random variables."}
+persp(u0, u1, z, theta = -30, phi = 30, ticktype = "detailed")
+```
+
+*Bivariate distribution with positive correlation*: see Figure \ref{fig:bivarposcorr}.
+
+```{r}
+Sigma2<-matrix(c(1,.6,.6,1),byrow=FALSE,ncol=2)
+f <- function(u0, u1) dmvnorm(cbind(u0, u1), mean = c(0, 0),sigma = Sigma2)
+z <- outer(u0, u1, FUN = f)
+```
+
+```{r fig.cap="\\label{fig:bivarposcorr}Visualization of two positively correlated random variables."}
+persp(u0, u1, z, theta = -30, phi = 30, ticktype = "detailed")
+```
+
+*Bivariate distribution with negative correlation*: see Figure \ref{fig:bivarnegcorr}.
+
+```{r}
+Sigma3<-matrix(c(1,-.6,-.6,1),byrow=FALSE,ncol=2)
+f <- function(u0, u1) dmvnorm(cbind(u0, u1), mean = c(0, 0),sigma = Sigma3)
+z <- outer(u0, u1, FUN = f)
+```
+
+```{r fig.cap="\\label{fig:bivarnegcorr}Visualization of two negatively correlated random variables."}
+persp(u0, u1, z, theta = -30, phi = 30, ticktype = "detailed")
+```
+
+Having acquired a graphical intuition, we turn to the formal definitions.
 Recall that in the univariate normal distribution:
 
 \begin{equation}
@@ -1045,7 +1175,7 @@ f(x) = \frac{1}{\sqrt{2\pi \sigma^2}} e\{ - \frac{(\frac{(x-\mu)}{\sigma})^2}{2}
 We can write the power of the exponential as:
 
 \begin{equation}
-(\frac{(x-\mu)}{\sigma})^2 = (x-\mu)(x-\mu)(\sigma^2)^{-1} = (x-\mu)(\sigma^2)^{-1}(x-\mu) = Q
+\left(\frac{(x-\mu)}{\sigma}\right)^2 = (x-\mu)(x-\mu)(\sigma^2)^{-1} = (x-\mu)(\sigma^2)^{-1}(x-\mu) = Q
 \end{equation}
 
 Generalizing this to the multivariate case: 
@@ -1054,12 +1184,15 @@ Generalizing this to the multivariate case:
 Q= (x-\mu)' \Sigma ^{-1} (x-\mu)	
 \end{equation}
 
+$\Sigma$ is a variance-covariance matrix shown in the examples above, and $\Sigma^{-1}$ is its inverse.
+
 So, for multivariate case:
 
 \begin{equation}
-f(x) = \frac{1}{\sqrt{2\pi det \Sigma }} e\{ - Q/2\}	 \quad -\infty < x_i < \infty, i=1,\dots,n
+f(x) = \frac{1}{\sqrt{2\pi det(\Sigma) }} e\{ - Q/2\}	 \quad -\infty < x_i < \infty, i=1,\dots,n
 \end{equation}
 
+$det(\Sigma)$ is the determinant of the matrix. 
 
 Properties of the multivariate normal (MVN) X:
 
@@ -1070,57 +1203,29 @@ Properties of the multivariate normal (MVN) X:
 	\item Conditional distributions are normal.
 \end{itemize}
 
-\textbf{Visualizing bivariate distributions}
 
-First, a visual of two uncorrelated RVs:
-
-```{r,fig.cap="\\label{fig:bivaruncorr}Visualization of two uncorrelated random variables."}
-library(MASS)
-
-bivn<-mvrnorm(1000,mu=c(0,1),Sigma=matrix(c(1,0,0,2),2))
-bivn.kde<-kde2d(bivn[,1],bivn[,2],n=50)
-persp(bivn.kde,phi=10,theta=0,shade=0.2,border=NA,
-      main="Simulated bivariate normal density")
-```
-
-And here is an example of a positively correlated case: 
-
-```{r,bivarcorr,fig.cap="\\label{fig:bivarcorr}Visualization of two correlated random variables."}
-bivn<-mvrnorm(1000,mu=c(0,1),Sigma=matrix(c(1,0.9,0.9,2),2))
-bivn.kde<-kde2d(bivn[,1],bivn[,2],n=50)
-persp(bivn.kde,phi=10,theta=0,shade=0.2,border=NA,
-      main="Simulated bivariate normal density")
-```
-
-And here is an example with a negative correlation:
-
-```{r,bivarcorrneg,fig.cap="\\label{fig:bivarnegcorr}Visualization of two negatively correlated random variables."}
-bivn<-mvrnorm(1000,mu=c(0,1),
-              Sigma=matrix(c(1,-0.9,-0.9,2),2))
-bivn.kde<-kde2d(bivn[,1],bivn[,2],n=50)
-persp(bivn.kde,phi=10,theta=0,shade=0.2,border=NA,
-      main="Simulated bivariate normal density")
-```
-
-\textbf{Visualizing conditional distributions}
+##### Visualizing conditional distributions
 
 You can run the following code to get a visualization of what a conditional distribution looks like when we take ``slices'' from the conditioning random variable:
 
 ```{r,eval=FALSE}
+bivn<-mvrnorm(1000,mu=c(0,1),Sigma=matrix(c(1,0,0,2),2))
+bivn.kde<-kde2d(bivn[,1],bivn[,2],n=50)
+
 for(i in 1:50){
   plot(bivn.kde$z[i,1:50],type="l",ylim=c(0,0.1))
   Sys.sleep(.5)
 }
 ```
 
+If you run this code, you will see ``slices'' from the bivariate distribution. 
 
 ## Maximum likelihood estimation
 
-Here, we look at the sample values and then choose as our estimates of the unknown parameters the values for which the probability or probability density of getting the sample values is a maximum. 
 
 ### Discrete case
 
-Suppose the observed sample values are $x_1, x_2,\dots, x_n$. The probability of getting them is
+Suppose the observed independent sample values are $x_1, x_2,\dots, x_n$ from some random variable with pmf $P(\cdot)$ that has a parameter $\theta$. The probability of getting these particular values is
 
 \begin{equation}
 P(X_1=x_1,X_2=x_2,\dots,X_n=x_n) = f(X_1=x_1,X_2=x_2,\dots,X_n=x_n;\theta)  
@@ -1159,7 +1264,7 @@ Let $X_i$, $i=1,\dots,n$ be a random variable with PDF $f(x; \sigma) = \frac{1}{
   L(\sigma) = \prod f(x_i; \sigma) = \frac{1}{(2\sigma)^n} exp (-\sum \frac{\mid x_i \mid}{\sigma})
 \end{equation}
 
-Let $\ell$ be log likelihood. Then:
+Let $\ell$ be log likelihood (log lik). The log likelihood is much easier to work with, because products become sums. Then:
 
 \begin{equation}
   \ell (x; \sigma) = \sum \left[ - \log 2 - \log \sigma - \frac{\mid x_i \mid}{\sigma} \right]
@@ -1279,7 +1384,7 @@ abline(h=log(0.4))
 
 #### One-parameter case
 
-Estimating $p$ for the binomial distribution:
+Estimating $\theta$ for the binomial distribution:
 Let's assume we have the result of 10 coin tosses. We know that the MLE is the number of successes divided by the sample size:
 
 ```{r}
@@ -1287,7 +1392,7 @@ x<-rbinom(10,1,prob=0.5)
 sum(x)/length(x)
 ```
 
-We will now get this number using MLE. We do it numerically to illustrate the principle. First, we define a negative log likelihood function for the binomial. Negative because the function we will use to optimize does minimization by default, so we just flip the sign on the log likelihood.
+We will now get this number using MLE. We do it numerically to illustrate the principle. First, we define a negative log likelihood function for the binomial. Negative because the function we will use to optimize does minimization by default, so we just flip the sign on the log likelihood to convert the maximum to a minimum.
 
 ```{r}
 negllbinom <- function(p, x){ 
@@ -1365,17 +1470,4 @@ Finally, we print out the estimated parameter values that maximize the likelihoo
 (estimates.default<-opt.vals.default$par)
 ```
 
-And we compute standard errors by taking the square root of the diagonals of the Hessian computed by the optim function:
-
-```{r}
-(SEs.default<-sqrt(diag(solve(opt.vals.default$hessian))))
-```
-
-These values match our standard calculations:
-
-```{r}
-### compute estimated standard error from data:
-sd(data)/sqrt(100)
-```
-
-
+Knowledge of maximum likelihood estimation will be needed in the next section.
