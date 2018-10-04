@@ -7,7 +7,24 @@
 
 This course is intended for **graduate students** in all relevant MSc progams related to Cognitive Science at the University of Potsdam, Germany. At the time of writing, this includes Cognitive Science and Linguistics.  
 
-**My teaching philosophy**:
+I assume here that the graduate student taking this course has elementary numeracy acquired usually at the class 10 level. I generally avoid calculus and linear algebra, and do not require the student to know these topics. Whenever calculus and linear algebra come up, I will explain what the equations or formulas mean just in time. No active ability in these areas is needed. What I do assume is basic (class 10) algebra, basic set theory,  and arithmetic ability.
+
+Some very basic knowledge of R is assumed, but not much. If students don't know R, I will provide a quick introduction, although google is one's friend here. 
+
+### Software needed
+
+Before starting, please install
+
+  - R and RStudio: see https://cran.r-project.org/ and https://www.rstudio.com/
+  - The R package rstan:
+    - Instructions for Windows: https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Windows
+    - Instructions for Mac or Linux: https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Mac-or-Linux 
+  - The R package brms: https://github.com/paul-buerkner/brms
+  
+Please talk to me if you have difficulties installing anything.  
+
+### Motivation for course design
+
 Because statistics inherently depends on mathematics, it is very important to get a reasonably formal introduction to the topic. The usual, informal manner in which statistics is taught has been a failure in all Cognitive Science disciplines.  We see this in the way statistics is routinely abused in psycholinguistics, psychology, and linguistics, among other areas. Some examples: 
 
   - deciding that an effect is ``reliable'' if $p<0.05$ in a severely underpowered study; for examples, see @JaegerEtAl2017, @VasishthMertzenJaegerGelman2018.
@@ -17,26 +34,21 @@ Because statistics inherently depends on mathematics, it is very important to ge
   - flexibly change the research question, theory, or predictions after seeing the data; for discussion of the distinction between confirmatory vs exploratory testing, see @NicenboimEtAlCogSci2018.
  - remove data selectively, or avoid removing it, depending on the desired result (examples will be provided).
  
-Yet, most people do not make these mistakes intentionally; I know because I have made them too. For examples of mistakes listed above from my own work, see @vasishthlewisLanguage05, @vasishth:phdbook. 
+Most people do not make these mistakes intentionally; I have made them too. For examples of mistakes listed above from my own work, see @vasishthlewisLanguage05, @vasishth:phdbook. 
 
+In a modest attempt to at least partly remedy this situation, the present course attempts to provide some understanding of the basic formal ideas behind statistical modeling. 
 
-In a modest attempt to at least partly remedy this situation, the present course attempts to provide some understanding of the basic ideas behind statistical modeling. 
+If you find mistakes, please open an issue here: https://github.com/vasishth/BayesianLinearModeling. 
 
-One important caveat here is that my own understanding is imperfect; I have studied these topics formally (MSc Statistics, Sheffield, UK), but that doesn't mean I grasp them fully. For deeper study, I recommend going to a Statistics or Math department and learning from professionals there. Meanwhile, if you find mistakes, please open an issue here: https://github.com/vasishth/BayesianLinearModeling. 
+The central idea we will explore in this course is: how to 
+use Bayes' theorem for data analysis. In order to understand the methodology, some passive understanding of the following topics needs to be in place:
 
-I assume here that the graduate student taking this course has elementary numeracy acquired usually at the class 10 level. I generally avoid calculus and linear algebra, and do not require the student to know these topics. Whenever these topics come up, I will explain them just in time. What I do assume is basic algebra, set theory,  and arithmetic ability.
-
-Some very basic knowledge of R is assumed, but not much. If students don't know R, I will provide a quick introduction, although google is one's friend here. 
-
-The basic idea we will explore in this course is: how to 
-use Bayes' theorem for data analysis. In order to understand the methodology, some passive understanding of the following concepts needs to be in place:
-
-  - Very **basic** probability theory
+  - Basic probability theory
   - The theory of random variables
   - Probability mass/density functions
   - Maximum likelihood estimation
 
-Without a clear understanding of these concepts, it is difficult to figure out how statistical modeling works. 
+Without a clear understanding of these concepts, it is difficult to explain how statistical modeling works. 
 
 So we will begin with these concepts. But before we dive in, it may help to know where we are going.
 
@@ -47,19 +59,18 @@ The way we will conduct data analysis is as follows.
 
   - Given data, specify a *likelihood function*.
   - Specify *prior distributions* for model parameters.
-  - Using software, derive *marginal posterior distributions* for parameters given likelihood function and prior density.
-  - Simulate parameters to get *samples from posterior distributions* of parameters using some *Markov Chain Monte Carlo (MCMC) sampling algorithm*.
-  - Evaluate whether model makes sense, using *model convergence* diagnostics, 
-  fake-data simulation, *prior predictive* and *posterior predictive* checks, and (if you want to claim a discovery) calibrating true and false discovery rates.
+  - Evaluate whether model makes sense, using fake-data simulation, *prior predictive* and *posterior predictive* checks, and (if you want to claim a discovery) calibrating true and false discovery rates.
+  - Using software, derive *marginal posterior distributions* for parameters given likelihood function and prior density. I.e., simulate parameters to get *samples from posterior distributions* of parameters using some *Markov Chain Monte Carlo (MCMC) sampling algorithm*.
+  - Check that the model converged using *model convergence* diagnostics,
   - Summarize *posterior distributions* of parameter samples and make your scientific decision.
 
-The above is what you will learn in this course; all the terms introduced above will be explained in these notes. We begin with basic probability theory.
+The above is what you will learn in this course; all the terms introduced above will be explained in these notes and in class. We begin with basic probability theory.
 
 ## Brief review of probability theory
 
-The best reference textbook I know for s first contact with probability theory is @kerns. My notes below are a bit terse because I am assuming you will look at Kerns if something is unclear.
+The best reference textbooks I know for s first contact with probability theory are @kerns and @blitzstein2014introduction. My notes below are a bit terse because I am assuming you will look at these if something is unclear.
 
-### Kolmogorov Axioms of Probability
+### Axioms of Probability
 
 We assume here a basic knowledge of set theory.
 Let $S$ be a set of events. For example, for a single coin toss, $S=\{A_1,A_2\}$, where $A_1$ is the event that we get a  heads, and $A_2$ the event that we get a tails.
@@ -67,13 +78,13 @@ Let $S$ be a set of events. For example, for a single coin toss, $S=\{A_1,A_2\}$
 \begin{enumerate}
 \item
 \textbf{Axiom 1}
-$(\mathbb{P}(A)\geq 0)$ for any event $(A\subset S)$.
+$\mathbb{P}(A)\geq 0$ for any event $A\subset S$.
 \item
 \textbf{Axiom 2}
-$(\mathbb{P}(S)=1)$.
+$\mathbb{P}(S)=1$.
 \item
 \textbf{Axiom 3}
-If the events $(A_{1}), (A_{2}), (A_{3})\dots$ are disjoint then
+If the events $A_{1}, A_{2}, A_{3},\dots$ are disjoint then
 
 
 \begin{equation}
@@ -87,7 +98,7 @@ and furthermore,
 \end{equation}
 \end{enumerate}
 
-#### Three important propositions
+Three important propositions:
 
 **Proposition 1**
 
@@ -187,7 +198,7 @@ In the case that A and B are independent, the numerator of the fraction factors 
 \mathbb{P}(A|B)=\mathbb{P}(A)\mbox{ when $A$, $B$ are independent.}
 \end{equation}
 
-**Proposition**
+**Proposition 4**
 
 If E and F are independent events, then so are E and F$^c$, E$^c$ and F, and E$^c$ and F$^c$.
 
@@ -1204,7 +1215,7 @@ Properties of the multivariate normal (MVN) X:
 \end{itemize}
 
 
-##### Visualizing conditional distributions
+#### Visualizing conditional distributions
 
 You can run the following code to get a visualization of what a conditional distribution looks like when we take ``slices'' from the conditioning random variable:
 
