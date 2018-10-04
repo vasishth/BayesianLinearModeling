@@ -410,7 +410,15 @@ as $n$ approaches infinity, the posterior variance will approach zero: more data
 
 ## Summary
  
- We saw two examples where we can do the computations to derive the posterior using simple algebra. There are several other such simple cases. However, in realistic data analysis settings, we cannot specify the posterior distribution as a particular density. For such cases, we need to use MCMC sampling techniques so that we can sample from the posterior distribution.
+ We saw two examples where we can do the computations to derive the posterior using simple algebra. There are several other such simple cases. However, in realistic data analysis settings, we cannot specify the posterior distribution as a particular density. We can only specify the priors and the likelihood. 
+ 
+ For such cases, we need to use MCMC sampling techniques so that we can sample from the posterior distributions of the parameters.
+ 
+We will discuss three approaches for sampling:
+
+  - Gibbs sampling using inversion sampling
+  - Metropolis-Hasting
+  - Hamiltonian Monte Carlo
  
 ## MCMC sampling
  
@@ -426,9 +434,64 @@ Steps:
 \item Then $z=F^{-1}(u)$ is a draw from $f(x)$.
 \end{enumerate}
 
-#### Example
+#### Example 1: Samples from Standard Normal
 
-let $f(x) = \frac{1}{40} (2x + 3)$, with $0<x<5$. We have to draw a number from the uniform distribution and then solve for z, which amounts to finding the inverse function:
+Take a sample from the Uniform(0,1):
+
+```{r}
+u<-runif(1,min=0,max=1)
+```
+
+Let f(x) be a Normal density---we want to sample from this density. The inverse of the CDF in R is qnorm. It takes as input a probability and returns a quantile. 
+
+```{r}
+qnorm(u)
+```
+
+If we do this repeatedly, we will get samples from the Normal distribution (here, the standard normal).
+
+```{r}
+nsim<-10000
+samples<-rep(NA,nsim)
+for(i in 1:nsim){
+  u <- runif(1,min=0,max=1)
+  samples[i]<-qnorm(u)
+}
+hist(samples,freq=FALSE,main="Standard Normal")
+```
+
+#### Example 2: Samples from Exponential or Gamma
+
+Now try this with the exponential with rate 1:
+
+```{r}
+nsim<-10000
+samples<-rep(NA,nsim)
+for(i in 1:nsim){
+  u <- runif(1,min=0,max=1)
+  samples[i]<-qexp(u)
+}
+hist(samples,freq=FALSE,main="Exponential")
+```
+
+Or the Gamma with rate and shape 1:
+
+```{r}
+nsim<-10000
+samples<-rep(NA,nsim)
+for(i in 1:nsim){
+  u <- runif(1,min=0,max=1)
+  samples[i]<-qgamma(u,rate=1,shape=1)
+}
+hist(samples,freq=FALSE,main="Gamma")
+```
+
+
+#### Example 3
+
+Let $f(x) = \frac{1}{40} (2x + 3)$, with $0<x<5$. Now, we can't just use the family of q functions in R, because this density is not defined in R.
+
+We have to draw a number from the uniform distribution and then solve for z, which amounts to finding the inverse function:
 
 \begin{equation}
 u = \int_0^z \frac{1}{40} (2x + 3)
@@ -444,7 +507,7 @@ This method can't be used if we can't find the inverse, and it can't be used wit
 
 ### Gibbs sampling
 
-Gibbs sampling is a very commonly used method in Bayesian statistics.
+Gibbs sampling is a very commonly used method in Bayesian statistics. Here is how it works.
 
 Let $\Theta$ be a vector of parameter values, let length of $\Theta$ be $k$. Let $j$ index the $j$-th iteration.
 
@@ -472,11 +535,13 @@ Return to step 1.
 
 #### Example: A simple bivariate distribution
 
+Assume that our bivariate (joint) density is:
+
 \begin{equation}
 f(x,y)= \frac{1}{28}(2x + 3y + 2)
 \end{equation}
 
-Using the results discussed in the Foundations chapter, it is possible to analytically work out the conditional distributions:
+Using the methods discussed in the Foundations chapter, it is possible to analytically work out the conditional distributions from the joint distribution:
 
 \begin{equation}
 f(x\mid y)=  \frac{f(x,y)}{f(y)}= \frac{(2x + 3y + 2)}{6y+8}
@@ -506,7 +571,7 @@ And for $f(y\mid x)$, we have to find $z_2$:
 u = \int_0^{z_2} \frac{(2x + 3y + 2)}{4y+10} \, dy
 \end{equation}
 
-I leave that as an exercise; the solution is given in the code below.
+It doesn't matter if you can't solve this integral; the solution is given in the code below.
 \end{enumerate}
 
 ```{r}
@@ -541,28 +606,117 @@ persp(bivar.kde,phi=10,theta=90,shade=0,border=NA,
 
 A central insight here is that knowledge of the conditional distributions is enough to simulate from the joint distribution, provided such a joint distribution exists. 
 
-## Hamiltonian Monte Carlo
+## Hamiltonian Monte Carlo {#hmc}
 
 Instead of Gibbs sampling, Stan uses this more efficient sampling approach. HMC works well for the high-dimensional models we will fit (hierarchical models).
+Gibbs sampling faces difficulties with some of the complex hierarchical models we will be fitting later. HMC will always succeed for these complex models.
 
-A good reference explaining HMC is @neal2011mcmc. However, this paper is technically very demanding. More intuitively accessible introductions are available via  Michael Betancourt's home page: https://betanalpha.github.io/.
+One limitation of HMC (which Gibbs sampling does not have) is that HMC only works with continuous parameters (not discrete parameters).
 
 For our purposes, it is enough to know what sampling using MCMC is, and that HMC gives us posterior samples efficiently.
+A good reference explaining HMC is @neal2011mcmc. However, this paper is technically very demanding. More intuitively accessible introductions are available via Michael Betancourt's home page: https://betanalpha.github.io/. In particular, this video is helpful:
+https://youtu.be/jUSZboSq1zg.
 
+### HMC demonstration 
+
+The HMC algorithm takes as input the log density and the gradient of the log density. In Stan, these will be computed internally; the user doesn't need to do any computations.
+
+For example, suppose the log density is $f(\theta) = - \frac{\theta^2}{2}$.
+Its gradient is $f'(\theta) = -\theta$. Setting this gradient to 0, and solving for $\theta$, we know that the maximum is at 0. We know it's a maximum because the second derivative, $f''(\theta) = -1$, is negative. See Figure \ref{fig:logdensityexample}.  
+
+This is the machinery we learnt in the foundations chapter (recall how we found MLEs in particular).
+
+```{r fig.cap="\\label{fig:logdensityexample}Example log density."}
+theta<-seq(-4,4,by=0.001)
+plot(theta,-theta^2/2,type="l",main="Log density")
+```
+
+We first write down the Radford Neal algorithm for HMC; details can be ignored in the next piece of code below, which I got from [Jarad Niemi](https://github.com/jarad/)'s github repository. 
+
+```{r}
+## Radford Neal algorithm:
+HMC_neal <- function(U, grad_U, e, L, current_theta) {
+theta = current_theta
+omega = rnorm(length(theta),0,1)
+current_omega = omega
+omega = omega - e * grad_U(theta) / 2
+for (i in 1:L) {
+theta = theta + e * omega
+if (i!=L) omega = omega - e * grad_U(theta)
+}
+omega = omega - e * grad_U(theta) / 2
+omega = -omega
+current_U = U(current_theta)
+current_K = sum(current_omega^2)/2
+proposed_U = U(theta)
+proposed_K = sum(omega^2)/2
+if (runif(1) < exp(current_U-proposed_U+current_K-proposed_K))
+{
+return(theta)
+}
+else {
+return(current_theta)
+}
+}
+
+HMC <- function(n_reps, log_density, grad_log_density, tuning, initial) {
+theta = rep(0, n_reps)
+theta[1] = initial$theta
+for (i in 2:n_reps) theta[i] = HMC_neal(U = function(x) -log_density(x),
+grad_U = function(x) -grad_log_density(x),
+e = tuning$e,
+L = tuning$L,
+theta[i-1])
+theta
+}
+```
+
+Then, we use the HMC function above to take 2000 samples from the posterior. 
+We drop the first few (typically, the first half) samples, which are called warm-ups. The reason we drop them is that the initial samples may not yet be sampling from the posterior.
+
+
+```{r}
+theta <- HMC(n_reps=2000, 
+             log_density=function(x) -x^2/2, 
+             grad_log_density=function(x) -x, 
+             tuning=list(e=1,L=1),
+             initial=list(theta=0))
+```
+
+Figure \ref{fig:hmcsamples0} shows a **trace plot**, the trajectory of the samples over 2000 iterations. This is called a **chain**. When the sampler is correctly sampling from the posterior, we see a characteristic ``fat hairy caterpillar'' shape, and we say that the sampler has **converged**. You will see later what a failed convergence looks like.
+
+
+```{r fig.cap="\\label{fig:hmcsamples0}An example of a trace plot."}
+plot(theta,type="l",main="Trace plot of posterior samples")
+```
+
+When we fit Bayesian models, we will always run four parallel chains. This is to make sure that even if we start with four different initial values chosen randomly, the chains all end up sampling from the same distribution. When this happens, we see that the chains overlap visually, and we say that the chains are **mixing**.
+
+Figure \ref{fig:hmcsamples} shows the posterior distribution of $\theta$. We are not discarding samples here because the sampler converges quickly in this simple example.
+
+
+```{r fig.cap="\\label{fig:hmcsamples}Sampling from the posterior using HMC. The red curve shows the distribution Normal(0,1)."}
+hist(theta, freq=F, 100,
+     
+     main="Posterior distribution of the parameter.",
+     xlab=expression(theta))
+curve(dnorm, add=TRUE, col='red', lwd=2)
+```
+
+In the modeling we do in the following pages, the Stan software will do the sampling for us. 
+
+\newpage 
 
 ## Further readings
 
 Some good books introducing Bayesian data analysis methods are the following:
 
   - McElreath, R. (2015). Statistical Rethinking. Texts in Statistical Science.
-This book assumes no calculus or linear algebra knowledge.
+This book is currently the best textbook in existence, and assumes no calculus or linear algebra knowledge.
 
-  - Kruschke, J. (2014). Doing Bayesian data analysis: A tutorial with R, JAGS, and Stan. Academic Press. This book is specifically designed for a psychology audience. 
+  - Kruschke, J. (2014). Doing Bayesian data analysis: A tutorial with R, JAGS, and Stan. Academic Press. This book is specifically designed for a psychology audience. I have only read parts of it and I find it very useful as a reference.
 
-  - Lynch, S. M. (2007). Introduction to applied Bayesian statistics and estimation for social scientists. Springer Science & Business Media. This book assumes knowledge of calculus and linear algebra.
-
-\newpage
-
+  - Lynch, S. M. (2007). Introduction to applied Bayesian statistics and estimation for social scientists. Springer Science & Business Media. This book assumes knowledge of calculus and linear algebra. It gives a classical, statistician's introduction to Bayes. I highly recommend this book to people who know some (undergraduate math level) calculus and linear algebra.
 
 \begin{qbox}{\subsection{Exercises}}
 
