@@ -23,7 +23,7 @@ output:
     latex_engine: pdflatex
     toc: true
     number_sections: true
-    toc_depth: 6
+    toc_depth: 3
     includes:
       before_body: prefix.tex
 citation_package: biblatex
