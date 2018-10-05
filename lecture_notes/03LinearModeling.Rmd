@@ -243,11 +243,11 @@ real<lower=0> mu;
 real<lower=0> sigma;
 }
 model {
-  // priors
-	mu ~ normal(0,2000);
-	sigma ~ normal(0,500);
-  // likelihood
-  y ~ normal(mu,sigma);
+// priors
+mu ~ normal(0,2000);
+sigma ~ normal(0,500);
+// likelihood
+y ~ normal(mu,sigma);
 }
 generated quantities {
   vector[N] y_sim;
@@ -362,7 +362,7 @@ m1brms<-brm(y~1,noreading_data,prior = priors,
 \item
 The term \texttt{family~=~gaussian()} makes explicit the underlying likelihood function that is implicit in \texttt{lme4}. Other linking functions are possible, exactly as in the \texttt{glmer} function in \texttt{lme4}.
 \item
-The term \texttt{prior} takes as argument the list of priors we defined earlier. Although this specification of priors is optional, the  researcher should always explicitly specify each prior. Otherwise, \texttt{brms} will define a prior by default, which may or may not be appropriate. Note that in brms we are unable to stipulate that $\mu$ must be larger than 0; this is an example of the limitations of front-end software like brms.
+The term \texttt{prior} takes as argument the list of priors we defined earlier. Although this specification of priors is optional, the  researcher should always explicitly specify each prior. Otherwise, \texttt{brms} will define a prior by default, which may or may not be appropriate. 
 \item 
 The term \texttt{iter} refers to the number of iterations  that the sampler makes to sample from the posterior distribution of each parameter (by default 2000). See the discussion on HMC earlier.
 \item 
@@ -381,7 +381,7 @@ The summary displayed below show summary statistics over the marginal posterior 
 Carlo standard errors (`se_mean`), split Rhats, and effective sample sizes (`n_eff`).  
 
 The summaries
-are computed after removing the warmup  and merging together all chains. Notice that the `se_mean` is unrelated to the `se` of an estimate in the frequentist model.  
+are computed after removing the warmup  and merging together all chains. Notice that the `se_mean` is unrelated to the `se` of an estimate in the frequentist model, and we will ignore it in this course.  
 
 
 ```{r}
@@ -390,18 +390,25 @@ summary(m1brms)
 
 A graphical summary of posterior distributions of model m1 is shown in Figure \ref{fig:m1stanplot}:
 
-```{r fig.cap="\\label{fig:m1stanplot}Posterior distributions of the parameters in model m1."}
+```{r message=FALSE,fig.cap="\\label{fig:m1stanplot}Posterior distributions of the parameters in model m1."}
 stanplot(m1brms,type="hist")
 ```
 
 The trace plots in Figure \ref{fig:m1traceplot} show how well the four chains are mixing:
 
-```{r fig.cap="\\label{fig:m1traceplot}Trace plots in model m1."}
+```{r message=FALSE,fig.cap="\\label{fig:m1traceplot}Trace plots in model m1."}
 stanplot(m1brms,type="trace")
 ```
 
+An alternative way to plot is shown in Figure \ref.
 
-```{r fit_fake, message=FALSE, warning=FALSE,include=FALSE,eval=FALSE}
+```{r message=FALSE,fig.cap="\\label{fig:m1plot}Posterior distributions and trace plots in model m1."}
+plot(m1brms)
+```
+
+
+
+```{r fit_fake, message=FALSE, warning=FALSE,include=FALSE,eval=FALSE,cache=TRUE}
 
 m1_fakebrms<-brm(y~1,fake_data,prior = priors,
        iter = 2000, chains = 4,family = gaussian(), 
@@ -409,7 +416,7 @@ m1_fakebrms<-brm(y~1,fake_data,prior = priors,
 ```
 
 
-## MCMC diagnostics: Convergence problems and Stan warnings
+### MCMC diagnostics: Convergence problems and Stan warnings
 
 Because we are using MCMC methods to sample from the posterior distributions, we need to make sure that the model has converged.
 
@@ -438,38 +445,61 @@ For useful graphical checks see https://cran.r-project.org/web/packages/bayesplo
 
 These issues **should not be ignored**! See the Appendix \ref{sec:Appendix} for some troubleshooting ideas to solve them.
 
-## The posterior distribution of $\mu$vs the distribution of RTs
+### Summarizing the posterior distribution: posterior probabilities and the credible interval
 
-```{r}
-hist(y)
-stanplot(m1_fakebrms,type="hist",pars="b_Intercept")
-```
+We are assuming that there's a true underlying time it takes to press the space bar, $\mu$, and there is normally distributed noise with distribution Normal(0,$\sigma$) that generates the different RTs. 
+All this is encoded in our likelihood by assuming that RTs are distributed with an unknown true mean $\mu$ (and an unknown standard deviation $\sigma$). 
 
-We are assuming that there's a true underlying time it takes to press the space bar, $\mu$, and there is normally distributed noise that generates the different RTs. This is encoded in our likelihood by assuming that RTs are distributed with an unknown true mean $\mu$ (and an unknown standard deviation $\sigma$). The objective of the Bayesian model is to learn about the possible values of $\mu$, or in other words, to get a distribution that encodes what we know about the true mean of the distribution of RTs (and also another distribution that encodes what we know about true standard deviation, $\sigma$, of the distribution of RTs.)
+The objective of the Bayesian model is to learn about the plausible values of $\mu$, or in other words, to get a distribution that encodes what we know about the true mean of the distribution of RTs, and about the true standard deviation, $\sigma$, of the distribution of RTs.
 
-*Given our data, what can we learn from the posterior distribution of $\mu$?*
-
-Our model allows us to have answers to questions such as:
+Our model allows us to answer questions such as:
 
 **What is the probability that the underlying value of the mindless press of
 the space bar would be over, say 170 ms?**
 
-**Answer**:
+As an example, consider this model that we ran above:
 
+```{r cache=TRUE}
+priors <- c(set_prior("normal(0, 2000)", 
+                      class = "Intercept"),
+            set_prior("normal(0, 500)", 
+                      class = "sigma"))
 
-**Which range of values contains a specified amount of probability?**
+m1brms<-brm(y~1,noreading_data,prior = priors,
+       iter = 2000,
+       warmup = 1000,
+       chains = 4,
+       family = gaussian(), 
+       control = list(adapt_delta = 0.99))
+```
+
+We now compute the posterior probability  $Prob(\mu>170)$:
+
+```{r}
+mu_post<-posterior_samples(m1brms,pars=c("b_Intercept"))$b_Intercept
+mean(mu_post>170)
+```
+
+**The credible interval**
+
+The 95% credible interval can be extracted for $\mu$ as follows:
+
+```{r}
+posterior_interval(m1brms,pars=c("b_Intercept"))
+```
 
 
 This type of interval is also known as a *credible interval*. 
-
 A credible interval demarcates the range within which we can be certain with a certain probability that the "true value" of a parameter lies given the data and the model.
-This is very different from the frequentist confidence interval! See for example, @HoekstraEtAl2014 and @MoreyEtAl2015.
+This is very different from the frequentist confidence interval! See for discussion, @HoekstraEtAl2014 and @MoreyEtAl2015.
 
 The percentile interval is a type of credible interval (the most common one), where we assign equal probability mass to each tail. We generally report 95% credible intervals. But we can extract any interval, a 73% interval, for example, leaves `r (1.00-.73)/2*100`% of the probability mass on each tail, and we can calculate it like this:
 
-to-do
+```{r}
+quantile(mu_post,prob=c(0.135,0.865))
+```
 
-### Influence of priors and sensitivity analysis
+#### Influence of priors and sensitivity analysis
 
 Everything was normally distributed in our example (or truncated normal), but the fact that we assumed that RTs were normally distributed is completely unrelated to our (truncated) normally distributed priors. Let's try a  uniform prior on $\mu$  with a low boundary of 0 and a high boundary of 5000. Here, we assume that every value between 0 and 5000 is equally likely. In general, this is a bad idea for two reasons: (i) it is computationally expensive (the sampler has a larger parameter space to search), and (ii) it is providing information that we know is not sensible (every value between 0 and 5000 cannot be equally likely). But in our very simple example these priors will give use the same posterior as with the normal priors.
 
@@ -512,12 +542,10 @@ You should always do a
 doesn't change drastically [for a published  example, see
 @VasishthetalPLoSOne2013]. See also Exercise \ref{ex:firstpriors}.
 
-## A slightly more interesting analysis of the small experiment \label{sec:moreinter}
+## Example 2: Investigating adaptation effects \label{sec:moreinter}
 
-More realistically, we might have run the small experiment to know whether the
-participant tended to speedup (practice effect) or slowdown (fatigue effect) while 
-pressing the space bar. 
-
+More realistically, we might have run the small experiment to find out whether the
+participant tended to speedup (practice effect) or slowdown (fatigue effect) while pressing the space bar. 
 
 ### Preprocessing the data
 
@@ -540,7 +568,7 @@ noreading_data$c_presses <- noreading_data$presses - mean(noreading_data$presses
 Our model changes, because we have a new parameter. 
 
 \begin{equation}
-RT_i \sim Normal(\alpha + presses_i \cdot \beta,\sigma)
+y_i \sim Normal(\alpha + presses_i \cdot \beta,\sigma)
 \end{equation}
 
 where $i =1 \ldots N$
@@ -557,7 +585,7 @@ And we are going to use the following priors:
 \end{equation}
 
 
-We are basically fitting a linear model, $\alpha$ represents the intercept (namely, the grand mean of the RTs), and $\beta$ represents the slope. Which information are the priors encoding? Does it make sense?
+We are basically fitting a linear model, $\alpha$ represents the intercept (namely, the grand mean of the RTs), and $\beta$ represents the slope. What information are the priors encoding? Do the priors make sense?
 
 
 
@@ -574,10 +602,10 @@ priors <- c(set_prior("normal(0, 2000)",
 ```
 
 ```{r cache=TRUE}
-m<-brm(y~1+presses,noreading_data,prior = priors,
+m2<-brm(y~1+presses,noreading_data,prior = priors,
        iter = 2000, chains = 4,family = gaussian(), 
        control = list(adapt_delta = 0.99))
-summary(m)
+summary(m2)
 ```
 
 ### Summarizing the posterior and inference
@@ -586,20 +614,20 @@ How can we answer our research question? What is the effect of pressing the
 bar on the participant's reaction time?
 
 
-We'll need to examine what happens with $\beta$. The summary gives us important information:
+We'll need to examine what happens with $\beta$. The summary gives us the relevant information:
 
 ```{r}
-m_post_samp_b <- posterior_samples(m, "^b")
-beta_samples <- m_post_samp_b$b_presses 
+m2_post_samp_b <- posterior_samples(m2, "^b")
+beta_samples <- m2_post_samp_b$b_presses 
 beta_mean<-mean(beta_samples)
 quantiles_beta <- quantile(beta_samples,prob=c(0.025,0.975))
 beta_low<-quantiles_beta[1]
 beta_high<-quantiles_beta[2]
 ```
 
-We can learn that the most likely values of $\beta$ will be around the mean of the posterior `r beta_mean`, and we can be 95% certain that the true value of $\beta$ *given the model and the data* lies between `r beta_low` and `r beta_high`. 
+We learn that the most likely values of $\beta$ will be around the mean of the posterior `r beta_mean`, and we can be 95% certain that the true value of $\beta$ *given the model and the data* lies between `r beta_low` and `r beta_high`. 
 
-We see that as the number of times the space bar is pressed increases, the participant becomes slower. If we want to know how  likely it is that the participant was slower rather than faster, we can examine the proportion of samples above zero:
+We see that as the number of times the space bar is pressed increases, the participant becomes slower. If we want to determine how  likely it is that the participant was slower rather than faster, we can examine the proportion of samples above zero:
 
 ```{r beta_samples}
 mean(beta_samples > 0)
@@ -610,21 +638,18 @@ Plotting the posterior as a histogram is always a good idea.
 
 Can we really conclude that there is a fatigue effect? It depends on how much
 we expect the fatigue to affect the RTs. Here we see that only after 100
-button presses, we'll see a slowdown of 9 ms on average ($0.09 \times 100$). We
-will need to think whether the size of this effect make sense considering the
-previous literature. Sometimes this requires a meta-analysis. See @JaegerEtAl2017 for an example, and the use of this prior knowledge in @NicenboimEtAl2016NIG.
+button presses do we see a slowdown of 9 ms on average ($0.09 \times 100$). 
 
-
+We need to consider whether the size of this effect has any scientific relevance by considering the
+previous literature. Sometimes this requires a meta-analysis. See @JaegerEtAl2017, @NicenboimRoettgeretal for examples. For examples of the use of this prior knowledge, see  @NicenboimEtAl2016NIG.
 
 ### Posterior predictive checks
 
-Let's say we know that our model is working as expected, since we already used
-fake data to test the recovery of the parameters. How do we know if our model
-is "good"?
+Let's say we know that our model is working as expected, since we already used fake data to test the recovery of the parameters (this will be a homework assignment). 
 
-We will examine the *descriptive adequacy* of the models [@ShiffrinEtAl2008;
+We will now examine the *descriptive adequacy* of the models [@ShiffrinEtAl2008;
 @GelmanEtAl2014, Chapter 6]: the observed data should look plausible under the
-*posterior predictive distribution*. The posterior predictive distribution is
+*posterior predictive distribution*, as discussed above. The posterior predictive distribution is
 composed of one dataset for each sample from the posterior. (So it will
 generate as many datasets as iterations we have after the warm-up.)  Achieving
 descriptive adequacy means that the current data could have been predicted
@@ -633,42 +658,38 @@ in favor of a model, but a major failure in descriptive adequacy can be
 interpreted as strong evidence against a model [@ShiffrinEtAl2008].
 
 
-To do posterior predictive checks for our last example, we need to do:
+To do posterior predictive checks for our last example, using brms, we need to do:
 
-```{r}
-pp_check(m, nsamples = 100)+
+```{r fig.cap="\\label{fig:m2ppc}Posterior predictive check of model m2."}
+pp_check(m2, nsamples = 100)+
   theme(text = element_text(size=16),
         legend.text=element_text(size=16))
 ```
 
-
-
-
 We'll use the values generated by our model to verify whether the general
 shape of the actual distribution matches the distributions from some of the
 generated datasets. Let's compare the real data against 100 of the predicted 4000
-datasets:
+datasets.
 
+*Are the posterior predicted data similar to the real data?*
 
-*Is the simulated data similar to the real data?*
-
-Our dataset seems to be more skewed to the right than  our predicted
+Figure \ref{fig:m2ppc} shows that 
+our dataset seems to be more skewed to the right than  our predicted
 datasets. This is not too surprising, we assumed that the likelihood was a
 normal distribution, but latencies are not very normal-like, they can't be
 negative and can be arbitrarily long.
 
-
-### A better probability model using the log-normal distribution
+### Using the log-normal likelihood
 
 Since we know that the latencies shouldn't be normally distributed, we can choose a more realistic distribution for the likelihood. A good candidate is the log-normal distribution since a variable (such as time) that is log-normally distributed takes only positive real values. 
 
-If $Y$ is log-normally distributed, this means that $log(Y)$ is normally distributed.^[In fact, $log_e(Y)$ or $ln(Y)$, but since it is the most popular logarithm in statistics we'll write it as just $log()$] Something important to notice is that the log-normal distribution is defined using again $\mu$ and $\sigma$, but this corresponds to the mean and standard deviation of the normally distributed logarithm $log(Y)$.  Thus $\mu$ and $\sigma$ are on a different scale than the variable that is log-normally distributed. 
+If $Y$ is log-normally distributed, this means that $log(Y)$ is normally distributed.^[In fact, $log_e(Y)$ or $ln(Y)$, but  we'll write it as just $log()$] Something important to notice is that the log-normal distribution is defined using again $\mu$ and $\sigma$, but this corresponds to the mean and standard deviation of the normally distributed logarithm $log(Y)$.  Thus $\mu$ and $\sigma$ are on a different scale than the variable that is log-normally distributed. 
 
-This also means that you can create a log-normal distribution by exponentiating the samples of a normal distribution:
+This also means that you can create a log-normal distribution by exponentiating the samples of a normal distribution. See Figure \ref{fig:logndemo}.
 
 
 
-```{r lognormal, fig.height=2,fig.width=3.5, fig.show='hold', message=F, warning=F}
+```{r lognormal, fig.height=2,fig.width=3.5, fig.show='hold', message=F, warning=F,fig.cap="\\label{fig:logndemo}The log-normal distribution."}
 mu <- 6
 sigma <- 0.5
 N <- 100000
@@ -687,7 +708,7 @@ plot(normalplot)
 
 
 
-### The slightly more realistic probability model
+### Re-fit the model assuming a log-normal likelihood
 
 If we assume that RTs are log-normally distributed, we'll need to change our model:
 
@@ -709,42 +730,39 @@ But now the scale of our priors needs to change! They are no longer in milliseco
 \end{equation}
 
 The interpretation of the parameters changes and it is more
-complex than if we were dealing with a linear model (that is, with  a normal distribution):
+complex than if we were dealing with a linear model that assumes  a normal likelihood:
 
 * $\alpha$. In our previous linear model, $\alpha$ represented the grand mean (or the grand median since in a normal distribution both coincide), and was equivalent to our previous $\mu$ (since $\beta$ was multiplied by 0). But now, the grand mean needs to be calculated in the following way,  $\exp(\alpha +\sigma ^{2}/2)$. Interestingly, the grand median will  just be $exp(\alpha)$,^[You can check in Wikipedia (https://en.wikipedia.org/wiki/Log-normal_distribution) why.] and we could assume that this represents the underlying time it takes to press the space bar if there would be no noise, that is, if $\sigma$ had no effect. This also means that the prior of $\alpha$ is not in milliseconds, but in log(milliseconds).
 
-*  $\beta$. In a linear model, $\beta$ represents the slowdown for each time the space bar is pressed. Now $\beta$ is the effect on the log-scale, and the effect in milliseconds depends on the intercept $\alpha$: $exp(\alpha + \beta) - exp(\alpha)$. Notice that the log is not linear and the effect of  $\beta$ will have more impact on milliseconds as the intercept grows. For example, if we start with (i) $exp(5) = 148$, and we add $0.1$ in log-scale, $exp(5 + 0.1) = 164$, we end up with a difference of 15 ms; if we start with (ii) $exp(6) = 400$, and we add $0.1$, $exp(6 + 0.1) = 445$, we end up with a difference of 45 ms. You can also see it graphically below.
+*  $\beta$. In a linear model, $\beta$ represents the slowdown for each time the space bar is pressed. Now $\beta$ is the effect on the log-scale, and the effect in milliseconds depends on the intercept $\alpha$: $\exp(\alpha + \beta) - \exp(\alpha)$. Notice that the log is not linear and the effect of  $\beta$ will have more impact on milliseconds as the intercept grows. For example, if we start with (i) $\exp(5) = 148$, and we add $0.1$ in log-scale, $\exp(5 + 0.1) = 164$, we end up with a difference of 15 ms; if we start with (ii) $\exp(6) = 400$, and we add $0.1$, $\exp(6 + 0.1) = 445$, we end up with a difference of 45 ms. You can also see this graphically below, in Figure \ref{fig:logexp}.
 
 *  $\sigma$. This is the standard deviation of the normal distribution of $log(y)$.
 
 <!-- ($exp(10+.1) - exp(10) >  exp(1+.1) - exp(1)$, that is, $`r exp(10+.1) - exp(10)` > `r exp(1+.1) - exp(1)`$). -->
 
-```{r, echo=F}
+```{r fig.cap="\\label{fig:logexp}Back-transforming to milliseconds."}
 
 ms_diff <- function(Intercept){
   exp(Intercept + .1) - exp(Intercept)
 }
 df <- tibble::data_frame(Intercept=seq(.1,15,.01), ms= ms_diff(Intercept))
 ggplot(df, aes(x=Intercept,y=ms)) + geom_point() + scale_y_continuous("Difference in milliseconds")
-
 ```
 
-What kind of information are the priors encoding?
+### What kind of information are the priors encoding?
 
 
 * For $\alpha$: We are 95% certain that the grand median of the RTs will be between $\approx `r exp(-10*2)`$ and $`r round(exp(10*2))`$ milliseconds. This is a (very-)weakly regularizing prior  because it won't affect our results, but it will down-weight values for the grand median of the RTs that are extremely large, and won't allow the grand median to be negative. We calculate the previous range by back-transforming the values that lie between two standard deviations of the prior ($2 \times 10$) to millisecond scale: $exp(-10 \times 2)$ and $exp(10 \times 2)$).
 
-* For $\beta$: This is more complicated, because the effect on milliseconds will depend on the estimate of $\alpha$. However, we can assume some value for $\alpha$ and it will be enough to be in the right order of magnitude. So let's assume 500 ms. That will mean that we are 95% certain that the effect of pressing the space bar will be between $`r round(exp(log(500) - 4)) - 500`$ and $`r round(exp(log(500) + 4)) - 500`$ milliseconds. It is asymmetric because the log-scale is asymmetric. But the prior is weak enough so that if we assume 1000 or 100 instead of 500, the possible estimates of $\beta$ will still be contained in the prior distribution.  We calculate this by first finding out the value in milliseconds when we are two standard deviations away in both directions: ($2\times 2$), that is $exp(500 - 2 \times 2)$ and  $exp(500 + 2 \times 2)$, and we subtract from that the value of $\alpha$ that we assumed, $500$:   $exp(500 - 2 \times 2) - 500$ and  $exp(500 + 2 \times 2) - 500$.
+* For $\beta$: This is more complicated, because the effect on milliseconds will depend on the estimate of $\alpha$. However, we can assume some value for $\alpha$ and it will be enough to be in the right order of magnitude. So let's assume 500 ms. That will mean that we are 95% certain that the effect of pressing the space bar will be between $`r round(exp(log(500) - 4)) - 500`$ and $`r round(exp(log(500) + 4)) - 500`$ milliseconds. It is asymmetric because the log-scale is asymmetric. But the prior is weak enough so that if we assume 1000 or 100 instead of 500, the possible estimates of $\beta$ will still be contained in the prior distribution.  We calculate this by first finding out the value in milliseconds when we are two standard deviations away in both directions: ($2\times 2$), that is $\exp(500 - 2 \times 2)$ and  $\exp(500 + 2 \times 2)$, and we subtract from that the value of $\alpha$ that we assumed, $500$:   $\exp(500 - 2 \times 2) - 500$ and  $\exp(500 + 2 \times 2) - 500$.
 
-*  For $\sigma$. This indicates that we are 95% certain that the standard deviation of $log(y)$ will be between 0 and 2. So 95% of the RTs  will be between $exp(log(500) - 1 \times 2) = `r round(exp(log(500) - 1 * 2))`$ and $exp(log(500) + 1 \times 2) = `r round(exp(log(500) + 1 * 2))`$.
+*  For $\sigma$. This indicates that we are 95% certain that the standard deviation of $log(y)$ will be between 0 and 2. So 95% of the RTs  will be between $\exp(\log(500) - 1 \times 2) = `r round(exp(log(500) - 1 * 2))`$ and $exp(log(500) + 1 \times 2) = `r round(exp(log(500) + 1 * 2))`$.
 
 What happens if we replace 500 by 100, and by 1000? What happens if it is 10 instead? Does it still makes sense?
 
-
-
 We'll code the model as follows. 
 
-```{r}
+```{r results="hide",cache=TRUE}
 priors_log <- c(set_prior("normal(0, 10)", 
                       class = "Intercept"),
             set_prior("normal(0, 1)", 
@@ -755,24 +773,29 @@ priors_log <- c(set_prior("normal(0, 10)",
 ```
 
 ```{r cache=TRUE}
-m_logn<-brm(y~1+presses,noreading_data,prior = priors_log,
+m2_logn<-brm(y~1+presses,noreading_data,prior = priors_log,
        iter = 2000, chains = 4,family = lognormal(), 
        control = list(adapt_delta = 0.99,max_treedepth=15))
-summary(m_logn)
 ```
 
-We fit the model, and check its convergence as usual.
+```{r}
+summary(m2_logn)
+```
+
+We fit the model, and check its convergence as usual (this will be a homework assignment).
 
 
 
 ### Summarizing the posterior and inference
 
+Next, we turn to the question of what we can report as our results, and what we can conclude from the data.
+
 ```{r, echo=F, results="hide"}
 options(scipen=999, digits=6)
 
-alpha_samples<-posterior_samples(m_logn,"^b")$b_Intercept
+alpha_samples<-posterior_samples(m2_logn,"^b")$b_Intercept
 
-beta_samples<-posterior_samples(m_logn,"^b")$b_presses
+beta_samples<-posterior_samples(m2_logn,"^b")$b_presses
 
 beta_ms<-exp(alpha_samples+beta_samples)-exp(alpha_samples)
 
@@ -786,12 +809,9 @@ beta_high <- round(quantile(beta_samples,prob=0.975),5)
 ```
 
 
-We can summarize the posterior and do inference as before. If we want to talk about the effect estimated by the model, we summarize the posterior of $\beta$ in the following way: $\hat\beta = `r mean(beta_samples)`$, 95% CrI = $[ `r beta_low` , `r beta_high` ]$, $P(\beta >0)  \approx `r mean(beta_samples > 0)`$
+We can summarize the posterior and do inference as discussed in Example 1. If we want to talk about the effect estimated by the model, we summarize the posterior of $\beta$ in the following way: $\hat\beta = `r mean(beta_samples)`$, 95% CrI = $[ `r beta_low` , `r beta_high` ]$, $P(\beta >0)  \approx `r mean(beta_samples > 0)`$
 
-
-
-
-But sometimes, the effect in milliseconds is easier to interpret. We generated the 
+But in most cases, the effect is easier to interpret in milliseconds. We generated the 
 effect of 1 press in the generated quantities block, which is not the same as
 the linear model's $\beta$. Our generated estimate will tell us the estimate
 of the slowdown produced by pressing the space bar in the middle of the
@@ -804,14 +824,14 @@ linear the effect won't be the same across the whole experiment; see Exercise
 
 ### Posterior predictive checks and distribution of summary statistics 
 
-We can now verify whether our predicted datasets look more similar to the real dataset.
+We can now verify whether our predicted datasets look more similar to the real dataset. See Figure \ref{fig:lognppc}.
 
-```{r, message=FALSE, warning=FALSE, fig.height=4}
-pp_check(m_logn, nsamples = 100)+
+```{r, message=FALSE, warning=FALSE, fig.height=4,fig.cap="\\label{fig:lognppc}Posterior predictive check."}
+pp_check(m2_logn, nsamples = 100)+
   theme(text = element_text(size=16),legend.text=element_text(size=16))
 ```
 
-*Is the simulated data now more similar to the real data?*
+*Are the posterior predicted data now more similar to the real data?*
 
 It seems so, but it's not easy to tell. Another way to examine this would be
 to look at the  *distribution of summary statistics*. The idea is to compare the
@@ -819,12 +839,29 @@ distribution of representative summary statistics for the datasets generated
 by different models and compare them to the observed statistics. Since we
 suspect that the log-normal distribution may capture the long tail,  we could
 use the maximum as a summary statistics.
+We could generate 100 posterior predictive data-sets, and then compute the maximum each time and plot the distribution of the maximum, comparing it with the maximum value (409) in the data.
 
-to-do
+```{r results="hide",cache=TRUE}
+m2_logn<-brm(y~1+presses,noreading_data,prior = priors_log,
+       iter = 2000, chains = 4,
+       family = lognormal(),
+       control = list(adapt_delta = 0.99,max_treedepth=15))
+postsamp<-posterior_samples(m2_logn,"^b",add_chain=TRUE)
 
-Here we see that both distributions are unable to capture the maximum value of the observed data, and that there's still room for improving the model. Another more advanced possibility is to compare the models using cross-validation techniques; see for example, @GelmanEtAl2014understanding; @VehtariOjanen2012; @VehtariEtAl2017.
+nsim<-100
+maximum<-rep(NA,nsim)
+for(i in 1:nsim){
+ppm2_logn<-predict(m2_logn)
+maximum[i]<-max(as.vector(ppm2_logn))
+}
+```
 
+```{r fig.cap="\\label{fig:ppcheckmax}Distribution of maximum values in a posterior predictive check. The maximum in the data is 409 ms."}
+hist(maximum,main="Distribution of maximum values",freq=FALSE)
+```
 
+Figure \ref{fig:ppcheckmax} shows that  we are unable to capture the maximum value of the observed data, so there's still room for improving the model.
+We will return to this question later in the course.
 
 ### General workflow
 
@@ -833,15 +870,16 @@ This is the general workflow that we recommend for a Bayesian model.
 1. Define the full probability model:
     a. Decide on the likelihood.
     b. Decide on the priors.
-    c. Write the brms model.
-2. Check model using fake data simulations:
+    c. Write the brms or Stan model.
+2. Do prior predictive checks to determine if priors make sense.    
+3. Check model using fake data simulations:
     a. Simulate data with known values for the parameters.
     b. Fit the model and do MCMC diagnostics.
     c. Verify that it recovers the parameters from simulated data.
-3. Fit the model with real data and do MCMC diagnostics.
-4. Evaluate the model's fit (e.g., posterior predictive checks, distribution of summary statistics). This may send you back to 1.
-5. Inference/prediction/decisions.
-6. Sometimes model comparison if there's an alternative model (to be discussed later).
+4. Fit the model with real data and do MCMC diagnostics.
+5. Evaluate the model's fit (e.g., posterior predictive checks, distribution of summary statistics). This may send you back to 1.
+6. Inference/prediction/decisions.
+7. Conduct model comparison if there's an alternative model (to be discussed later).
 
 
 
@@ -851,11 +889,11 @@ This is the general workflow that we recommend for a Bayesian model.
 
 \begin{Sbox}{\subsection{Key concepts}}
 \begin{itemize}
-\item Basic brms syntax.
+\item Basic brms and Stan syntax.
 \item How to identify convergence problems (MCMC diagnostics).
 \item Normal and log-normal distributions.
 \item Summaries of the posterior and inference.
-\item Model evaluation using posterior predictive checks.
+\item Model evaluation using prior and posterior predictive checks.
 \item General workflow for doing Bayesian analysis.
 \end{itemize}
 \end{Sbox}
