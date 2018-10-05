@@ -530,6 +530,10 @@ pnorm(1)-pnorm(0)
 
 ### Binomial distribution
 
+**Examples**: coin tosses, question-response accuracy
+
+**Probability mass function**:
+
 If we have $x$ successes in $n$ trials, given a success probability $p$ for each trial. If $x \sim Bin(n,p)$.
 
 \begin{equation}
@@ -538,16 +542,20 @@ P(x\mid n, p) = {n \choose k} p^k (1-p)^{n-k}
 
 [Recall that: ${n \choose k} = \frac{n!}{(n-r)! r!}$. Hence, given $x$ and $n$, this term will be a constant.]
 
+**Mean and variance**:
+
 The mean is $np$ and the variance $np(1-p)$.
 
 When $n=1$ we have the Bernoulli distribution.
+
+**Important functions in R**
 
 \begin{verbatim}
 ###pmf:
 dbinom(x, size, prob, log = FALSE)
 ### cdf:
 pbinom(q, size, prob, lower.tail = TRUE, log.p = FALSE)
-### quantiles:
+### inverse cdf:
 qbinom(p, size, prob, lower.tail = TRUE, log.p = FALSE)
 ### pseudo-random generation of samples:
 rbinom(n, size, prob)
@@ -556,6 +564,10 @@ rbinom(n, size, prob)
 \textbf{Notational conventions}: A binomial distribution, $n$ trials each with probability $\theta$ of occurring, is written $Bin(\theta,n)$. Given a random variable with this distribution, we can write $R\mid \theta, n \sim Bin(\theta,n)$ or $p(r\mid \theta, n) = Bin(\theta,n)$, where $r$ is the realization of $R$. We can drop the conditioning in $R\mid \theta, n$, so that we can write: given $R\sim Bin(\theta,n)$, what is $Pr(\theta_1 < \theta < \theta_2\mid r, n)$.
 
 ### Uniform distribution
+
+**Example**: All outcomes have equal probability.
+
+**Probability density function**:
 
 A random variable $(X)$ with the continuous uniform distribution on the interval $(\alpha,\beta)$ has PDF
 
@@ -579,6 +591,9 @@ F_{X}(a)=
 \label{eq-unif-cdf}
 \end{equation}
 
+**Mean and variance**:
+
+
 \begin{equation}
 E[X]= \frac{\beta+\alpha}{2}
 \end{equation}
@@ -586,6 +601,8 @@ E[X]= \frac{\beta+\alpha}{2}
 \begin{equation}
 Var(X)= \frac{(\beta-\alpha)^2}{12}
 \end{equation}
+
+**Important functions in R**
 
 \begin{verbatim}
 dunif(x, min = 0, max = 1, log = FALSE)
@@ -595,6 +612,10 @@ runif(n, min = 0, max = 1)
 \end{verbatim}
 
 ### Normal distribution
+
+**Examples**: heights, weights of people
+
+**Probability density function**
 
 \begin{equation}
 f_{X}(x)=\frac{1}{\sigma\sqrt{2\pi}}e^{ \frac{-(x-\mu)^{2}}{2\sigma^{2}}},\quad -\infty < x < \infty.
@@ -610,7 +631,7 @@ plot(function(x) dnorm(x), -3, 3,
 
 If $X$ is normally distributed with parameters $\mu$ and $\sigma^2$, then $Y=aX+b$ is normally distributed with parameters $a\mu + b$ and $a^2\sigma^2$.
 
-\textbf{Standard or unit normal random variable:} 
+**Special case: Standard or unit normal random variable** 
 
 If $X$ is normally distributed with parameters $\mu$ and $\sigma^2$, then $Z=(X-\mu)/\sigma$ is normally distributed with parameters $0,1$.
 
@@ -642,6 +663,19 @@ F_X(a) = P\{ X\leq a \} = P\left( \frac{X - \mu}{\sigma} \leq \frac{a - \mu}{\si
 The standardized version of a normal
 random variable X is used to compute specific probabilities relating to X (it is also easier to compute probabilities from different CDFs so that the two computations are comparable).
 
+**Mean and variance**
+
+\begin{equation}
+E[X]= \mu 
+\end{equation}
+
+\begin{equation}
+Var(X)= \sigma^2
+\end{equation}
+
+
+**Important functions in R**
+
 \begin{verbatim}
 dnorm(x, mean = 0, sd = 1, log = FALSE)
 pnorm(q, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)
@@ -649,33 +683,86 @@ qnorm(p, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)
 rnorm(n, mean = 0, sd = 1)
 \end{verbatim}
 
+### Log-Normal distribution
+
+**Examples**: reaction time, reading time 
+
+**Probability density function**
+
+\begin{equation}
+f_{X}(x)=\frac{1}{x\sigma\sqrt{2\pi}}e^{ \frac{-(\log x-\log \mu)^{2}}{2\sigma^{2}}},\quad 0 < x < \infty.
+\end{equation}
+
+
+```{r,fig.cap="\\label{fig:normaldistr}Normal distribution."}
+plot(function(x) dlnorm(x), 0, 3,
+      main = "Log-Normal density",
+              ylab="density",xlab="X")
+```
+
+
+**Mean and variance**
+
+\begin{equation}
+E[X]= \mu + \sigma/2
+\end{equation}
+
+\begin{equation}
+Var(X)= \sigma^2
+\end{equation}
+
+
+**Important functions in R**
+
+\begin{verbatim}
+dlnorm(x, meanlog = 0, sdlog = 1)
+plnorm(q, meanlog = 0, sdlog = 1, lower.tail = TRUE)
+qlnorm(p, meanlog = 0, sdlog = 1, lower.tail = TRUE)
+rlnorm(n, meanlog = 0, sdlog = 1)
+\end{verbatim}
 
 ### The Poisson distribution
 
-As Kerns puts it (I quote him nearly exactly, up to the definition):
+**Examples**:
+traffic accidents, typing errors, customers arriving in a bank, number of fixations in reading.		
 
-\begin{quote}
-  This is a distribution associated with ``rare events'', for reasons which will become clear in a moment. The events might be:
-  \begin{itemize}
-    \item traffic accidents,
-		\item typing errors, or
-		\item customers arriving in a bank.		
-	\end{itemize}
+**Probability density function**
 
-For psychology and linguistics, one application is in eye tracking: modeling number of fixations. 
-
-Let $\lambda$ be the average number of events in the time interval $[0,1]$. Let the random variable $X$ count the number of events occurring in the interval. Then under certain reasonable conditions it can be shown that
+Let $\lambda$ be the average number of events in the time interval $[0,1]$. Let the random variable $X$ count the number of events occurring in the interval. Then:
 
 	\begin{equation}
 	f_{X}(x)=\mathbb{P}(X=x)=\mathrm{e}^{-\lambda}\frac{\lambda^{x}}{x!},\quad x=0,1,2,\ldots
 	\end{equation}
 \end{quote}
 
+**Mean and variance**
+
+\begin{equation}
+E[X]= \lambda
+\end{equation}
+
+\begin{equation}
+Var(X)= \lambda
+\end{equation}
+
+
+**Important functions in R**
+
+\begin{verbatim}
+dpois(x, lambda)
+ppois(q, lambda, lower.tail = TRUE)
+qpois(p, lambda, lower.tail = TRUE)
+rpois(n, lambda)
+\end{verbatim}
 
 
 ### Beta distribution
 
-This is a generalization of the continuous uniform distribution.
+**Example**: Distribution of probability of success. 
+
+**Probability density function**
+
+This is a generalization of the continuous uniform distribution. Think of parameter $a$ as number of successes, and parameter $b$ as number of failures.
 
 \begin{equation*}
 f(x)=  \left\{ 	
@@ -693,20 +780,32 @@ B(a,b) = \int_0^1 x^{a-1}(1-x)^{b-1}\, dx
 \end{equation*}
 
 
-We write $X\sim\mathsf{beta}(\mathtt{shape1}=\alpha,\,\mathtt{shape2}=\beta)$. The associated $\mathsf{R}$ function is =dbeta(x, shape1, shape2)=. 
+We write $X\sim\mathsf{beta}(\mathtt{shape1}=a,\,\mathtt{shape2}=b)$. 
 
-The mean and variance are
+
+**Mean and variance**
 
 \begin{equation} 
 E[X]=\frac{a}{a+b}\mbox{ and }Var(X)=\frac{ab}{\left(a+b\right)^{2}\left(a+b+1\right)}.
 \end{equation}
 
+**Important functions in R**
 
-This distribution is going to turn up a lot in Bayesian data analysis.
+\begin{verbatim}
+dbeta(x, shape1, shape2)
+pbeta(q, shape1, shape2)
+qbeta(p, shape1, shape2)
+rbeta(n, shape1, shape2)
+\end{verbatim}
+
 
 ### Gamma distribution
 
-This is a generalization of the exponential distribution. We say that $X$ has a gamma distribution and write $X\sim\mathsf{gamma}(\mathtt{shape}=\alpha,\,\mathtt{rate}=\lambda)$, where $\alpha>0$ (called shape) and $\lambda>0$ (called rate). It has PDF
+**Examples**: reading times, distribution of inverse of variance.
+
+**pdf**
+
+This is a generalization of the exponential distribution. We say that $X$ has a Gamma distribution and write $X\sim\mathsf{gamma}(\mathtt{shape}=\alpha,\,\mathtt{rate}=\lambda)$, where $\alpha>0$ (called shape) and $\lambda>0$ (called rate). It has PDF
 
 \begin{equation*}
 f(x)=  \left\{ 	
