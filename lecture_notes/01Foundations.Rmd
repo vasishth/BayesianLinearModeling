@@ -3,11 +3,19 @@
 
 ## Introduction
 
+This document and all associated material are provided under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+
+**Acknowledgments**: The linear modeling and hierarchical linear modeling chapters follows to some extent the presentation developed by Bruno Nicenboim in 
+https://github.com/vasishth/FGME_Stan_2017. The course notes have benefitted a lot from the lectures and writings of [Michael Betancourt](https://betanalpha.github.io/).
+
 ### Intended audience and prerequisites
 
 This course is intended for **graduate students** in all relevant MSc progams related to Cognitive Science at the University of Potsdam, Germany. At the time of writing, this includes Cognitive Science and Linguistics.  
 
-I assume here that the graduate student taking this course has elementary numeracy acquired usually at the class 10 level. I generally avoid calculus and linear algebra, and do not require the student to know these topics. Whenever calculus and linear algebra come up, I will explain what the equations or formulas mean just in time. No active ability in these areas is needed. What I do assume is basic (class 10) algebra, basic set theory,  and arithmetic ability.
+The public course home page is [here](http://www.ling.uni-potsdam.de/~vasishth/statistics/BayesianLinearModelingWI2018.html).
+The university-internal moodle forum for homework submissions and internal communications is [here](https://moodle2.uni-potsdam.de/course/view.php?id=17526).
+
+I assume here that the graduate student taking this course has elementary numeracy acquired usually at the class 10 level.  Calculus and linear algebra are mentioned in the notes but I do not require the student to know these topics. Whenever calculus and linear algebra come up, I will explain what the equations or formulas mean just in time. No **active** ability in these areas is needed. What I do assume is basic (class 10) algebra, basic set theory,  and arithmetic ability.
 
 Some very basic knowledge of R is assumed, but not much. If students don't know R, I will provide a quick introduction, although google is one's friend here. 
 
@@ -15,13 +23,13 @@ Some very basic knowledge of R is assumed, but not much. If students don't know 
 
 Before starting, please install
 
-  - R and RStudio: see https://cran.r-project.org/ and https://www.rstudio.com/
+  - [R](https://cran.r-project.org/) and [RStudio](https://www.rstudio.com/)
   - The R package rstan:
-    - Instructions for Windows: https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Windows
-    - Instructions for Mac or Linux: https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Mac-or-Linux 
-  - The R package brms: https://github.com/paul-buerkner/brms
+    - [Instructions for Windows](https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Windows)
+    - [Instructions for Mac or Linux](https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Mac-or-Linux) 
+  - The R package [brms](https://github.com/paul-buerkner/brms)
   
-Please talk to me if you have difficulties installing anything.  
+Please talk to me if you have difficulties installing anything, although be warned that my knowledge of Windows is limited to knowing that it exists in the world out there somewhere.  
 
 ### Motivation for course design
 
@@ -43,15 +51,29 @@ If you find mistakes, please open an issue here: https://github.com/vasishth/Bay
 The central idea we will explore in this course is: how to 
 use Bayes' theorem for data analysis. In order to understand the methodology, some passive understanding of the following topics needs to be in place:
 
-  - Basic probability theory
+
+  - Basic probability theory:
+    - sum and product rule
+    - conditional probability
+    - Bayes' rule
   - The theory of random variables
-  - Probability mass/density functions
+    - probability density/mass function $f(x)$ vs cumulative distribution function $F(x)$
+    - inverse CDF $F^{-1}(x)$
+    - expectation and variance of (transformations of) random variables
+  - Probability density/mass functions
+    - Ten common pdf's
+    - Jointly distributed random variables
+    - Sums of random variables
+    - Marginal and conditional pdfs
+    - Covariance and correlation
+    - Multivariate normal distributions
   - Maximum likelihood estimation
+    - How to find MLEs analytically
+    - How to find MLEs using computational methods
+    - Visualization of log likelihood
 
-Without a clear understanding of these concepts, it is difficult to explain how statistical modeling works. 
-
-So we will begin with these concepts. But before we dive in, it may help to know where we are going.
-
+Without a clear understanding of these concepts, confusion is an inevitable outcome. 
+So we will begin with these concepts. But before we dive in, it may help to know where we are going in this course.
 
 ### Preview: Steps in Bayesian analysis
 
@@ -524,11 +546,9 @@ pnorm(1)-pnorm(0)
 
 \end{enumerate}
 
-## Seven important distributions
+## Ten important distributions
 
-
-
-### Binomial distribution
+### Binomial
 
 **Examples**: coin tosses, question-response accuracy
 
@@ -563,7 +583,7 @@ rbinom(n, size, prob)
 
 \textbf{Notational conventions}: A binomial distribution, $n$ trials each with probability $\theta$ of occurring, is written $Bin(\theta,n)$. Given a random variable with this distribution, we can write $R\mid \theta, n \sim Bin(\theta,n)$ or $p(r\mid \theta, n) = Bin(\theta,n)$, where $r$ is the realization of $R$. We can drop the conditioning in $R\mid \theta, n$, so that we can write: given $R\sim Bin(\theta,n)$, what is $Pr(\theta_1 < \theta < \theta_2\mid r, n)$.
 
-### Uniform distribution
+### Uniform
 
 **Example**: All outcomes have equal probability.
 
@@ -611,7 +631,7 @@ qunif(p, min = 0, max = 1, lower.tail = TRUE, log.p = FALSE)
 runif(n, min = 0, max = 1)
 \end{verbatim}
 
-### Normal distribution
+### Normal
 
 **Examples**: heights, weights of people
 
@@ -683,7 +703,7 @@ qnorm(p, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)
 rnorm(n, mean = 0, sd = 1)
 \end{verbatim}
 
-### Log-Normal distribution
+### Log-Normal
 
 **Examples**: reaction time, reading time 
 
@@ -721,7 +741,7 @@ qlnorm(p, meanlog = 0, sdlog = 1, lower.tail = TRUE)
 rlnorm(n, meanlog = 0, sdlog = 1)
 \end{verbatim}
 
-### The Poisson distribution
+### Poisson
 
 **Examples**:
 traffic accidents, typing errors, customers arriving in a bank, number of fixations in reading.		
@@ -756,7 +776,7 @@ rpois(n, lambda)
 \end{verbatim}
 
 
-### Beta distribution
+### Beta
 
 **Example**: Distribution of probability of success. 
 
@@ -776,7 +796,7 @@ f(x)=  \left\{
 where
 
 \begin{equation*}
-B(a,b) = \int_0^1 x^{a-1}(1-x)^{b-1}\, dx
+Beta(a,b) = \int_0^1 x^{a-1}(1-x)^{b-1}\, dx
 \end{equation*}
 
 
@@ -798,7 +818,7 @@ qbeta(p, shape1, shape2)
 rbeta(n, shape1, shape2)
 \end{verbatim}
 
-## Exponential
+### Exponential
 
 **Examples**: Waiting time for an arrival from a Poisson process (e.g., reading times) 
 
@@ -814,68 +834,27 @@ f(x)=  \left\{
 \end{array} \right.
 \end{equation*}
 
-[Note: the integration requires the u-substitution: $u=-\lambda x$, and then $du/dx=-\lambda$, and then use $-du=\lambda dx$ to solve.]
+**Mean and variance**
 
-\paragraph{Expectation and variance of an exponential random variable}
-
-For some $\lambda > 0$ (called the rate), if we are given the PDF of a random variable $X$:
-
-\begin{equation*}
-f(x)=  \left\{ 	
-\begin{array}{l l}
-       \lambda e^{-\lambda x} & \quad \textrm{if } x \geq 0\\
-       0 & \quad \textrm{if } x < 0.\\
-\end{array} \right.
-\end{equation*}
-
-Find E[X].
-
-[This proof seems very strange and arbitrary---one starts really generally and then scales down, so to speak. The standard method can equally well be used, but this is more general, it allows for easy calculation of the second moment, for example. Also, it's an example of how reduction formulae are used in integration.]
-
-\begin{equation*}
-E[X^n] = \int_0^\infty x^n \lambda e^{-\lambda x} \, dx	
-\end{equation*}
-
-Use integration by parts:
-
-Let $u=x^n$, which gives $du/dx=n x^{n-1}$. Let $dv/dx= \lambda e^{-\lambda x}$, which gives
-$v = -e^{-\lambda x}$. Therefore:
-
-\begin{equation*}
-\begin{split}	
-E[X^n] =&  \int_0^\infty x^n \lambda e^{-\lambda x} \, dx	\\
-       =& \left[ -x^n e^{-\lambda x}\right]_0^\infty + \int_0^\infty e^{\lambda x} n x^{n-1}\, dx\\
-       =& 0 + \frac{n}{\lambda} \int_0^\infty \lambda e^{-\lambda x} n^{n-1}\, dx  
-\end{split}
-\end{equation*}
-
-Thus,
-
-\begin{equation*}
-E[X^n] =  \frac{n}{\lambda}E[X^{n-1}]
-\end{equation*}
-
-If we let $n=1$, we get $E[X]$:
-
-\begin{equation*}
+\begin{equation}
 E[X] =  \frac{1}{\lambda}
-\end{equation*}
+\end{equation}
 
-Note that when $n=2$, we have
+\begin{equation}
+Var(X) = \frac{1}{\lambda^2}
+\end{equation}
 
-\begin{equation*}
-E[X^2] =  \frac{2}{\lambda}E[X]= \frac{2}{\lambda^2}
-\end{equation*}
+**Important functions in R**
 
-Variance is, as usual,
-
-\begin{equation*}
-var(X) = E[X^2] - (E[X])^2	=  \frac{2}{\lambda^2} -  (\frac{1}{\lambda})^2 = \frac{1}{\lambda^2}
-\end{equation*}
-
+\begin{verbatim}
+dexp(x, rate=1)
+pexp(q, rate=1)
+qexp(p, rate=1)
+rexp(n, rate=1)
+\end{verbatim}
 
 
-### Gamma distribution
+### Gamma
 
 **Examples**: reading times, distribution of inverse of variance.
 
@@ -954,7 +933,7 @@ x<-seq(0,100,by=.01)
 plot(x,gamma.fn(x),type="l")
 ```
 
-### $t$ distribution
+### Student's $t$
 
 **Examples**: reading times.
 
@@ -990,6 +969,34 @@ qt(p, df)
 rt(n, df)
 \end{verbatim}
 
+### Summary of distributions
+
+\small
+\begin{center}
+\renewcommand{\arraystretch}{3.7}
+\begin{tabular}{ccccc}
+\textbf{Distribution} & \textbf{PMF/PDF and Support} & \textbf{Expected Value}  & \textbf{Variance}\\
+\hline 
+\shortstack{Binomial \\ Bin($n, p$)} & \shortstack{$P(X=k) = {n \choose k}p^k q^{n-k}$  \\ $k \in \{0, 1, 2, \dots n\}$}& $np$ & $npq$ \\
+\hline
+\shortstack{Uniform \\ Unif($a, b$)} & \shortstack{$ f(x) = \frac{1}{b-a}$ \\$ x \in (a, b) $} & $\frac{a+b}{2}$ & $\frac{(b-a)^2}{12}$ \\
+\hline
+\shortstack{Normal \\ $Normal(\mu, \sigma^2)$} & \shortstack{$f(x) = \frac{1}{\sigma \sqrt{2\pi}} e^{-\sfrac{(x - \mu)^2}{(2 \sigma^2)}}$ \\ $x \in (-\infty, \infty)$} & $\mu$ \\
+\hline
+\shortstack{Log-Normal \\ $LogNormal(\mu,\sigma^2)$} & \shortstack{$\frac{1}{x\sigma \sqrt{2\pi}}e^{-(\log x - \mu)^2/(2\sigma^2)}$\\$x \in (0, \infty)$} & $\theta = e^{ \mu + \sigma^2/2}$ & $\theta^2 (e^{\sigma^2} - 1)$ \\
+\hline
+\shortstack{Poisson \\ Pois($\lambda$)} & \shortstack{$P(X=k) = \frac{e^{-\lambda}\lambda^k}{k!}$ \\ $k \in \{$0, 1, 2, \dots $\}$} & $\lambda$ & $\lambda$ \\
+\hline
+\shortstack{Beta \\ Beta($a, b$)} & \shortstack{$f(x) = \frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)}x^{a-1}(1-x)^{b-1}$\\$x \in (0, 1) $} & $\mu = \frac{a}{a + b}$  & $\frac{\mu(1-\mu)}{(a + b + 1)}$  \\
+\hline
+\shortstack{Exponential \\ $Exp(\lambda)$} & \shortstack{$f(x) = \lambda e^{-\lambda x}$\\$ x \in (0, \infty)$} & $\frac{1}{\lambda}$  & $\frac{1}{\lambda^2}$ \\
+\hline
+\shortstack{Gamma \\ $Gamma(a, \lambda)$} & \shortstack{$f(x) = \frac{1}{\Gamma(a)}(\lambda x)^ae^{-\lambda x}\frac{1}{x}$\\$ x \in (0, \infty)$} & $\frac{a}{\lambda}$  & $\frac{a}{\lambda^2}$ \\
+\shortstack{Student-$t$ \\ $t_n$} & \shortstack{$\frac{\Gamma((n+1)/2)}{\sqrt{n\pi} \Gamma(n/2)} (1+x^2/n)^{-(n+1)/2}$\\$x \in (-\infty, \infty)$} & $0$ if $n>1$ & $\frac{n}{n-2}$ if $n>2$ \\
+\hline
+\end{tabular}
+\end{center}
+\normalsize
 
 ## Jointly distributed random variables
 
@@ -1290,7 +1297,7 @@ f_{X\mid Y}(x\mid y)\, dx =& \frac{f(x,y)}{f_Y(y)} \frac{dxdy}{dy}\\
 \end{equation}
 
 
-##Covariance and correlation
+### Covariance and correlation
 
 There are two very special cases of joint expectation: the \textbf{covariance} and the \textbf{correlation}. These are measures which help us quantify the dependence between $X$ and $Y$. 
 
