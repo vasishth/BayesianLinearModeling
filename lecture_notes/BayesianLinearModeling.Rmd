@@ -1,7 +1,7 @@
 ---
 subtitle: "Lecture notes for MSc Cognitive Science and MSc Linguistics, University of Potsdam, Germany"
 title: "Bayesian Linear Modeling: An  introduction using brms and rstan"
-author: "Shravan Vasishth (with contributions by Bruno Nicenboim)"
+author: "Shravan Vasishth"
 date: "`r Sys.Date()`"
 header-includes:
    - \usepackage{todonotes}
@@ -12,10 +12,14 @@ header-includes:
    - \usepackage{mathptmx}
    - \usepackage{amsthm}
    - \usepackage{esint}
+   - \usepackage{xfrac}
    - \newtheorem{definition}{Definition}
    - \newtheorem{proposition}{Proposition}
    - \newtheorem{theorem}{Theorem}
 fontsize: 12pt
+linkcolor: red
+urlcolor: red
+citecolor: green
 output:
   pdf_document: 
     fig_caption: yes
