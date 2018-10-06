@@ -65,4 +65,9 @@ theme_set(theme_classic())
 
 \newpage
 
+```{r child = '04HierarchicalLinearModeling.Rmd'}
+```
+
+\newpage
+
 # References
