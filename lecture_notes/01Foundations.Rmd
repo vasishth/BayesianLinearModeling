@@ -3,7 +3,10 @@
 
 ## Introduction
 
-This document and all associated material are provided under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+This document and all associated material are provided under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/). The materials are available from: 
+
+  - [OSF](https://osf.io/jhu47/)
+  - [github](https://github.com/vasishth/BayesianLinearModeling)
 
 **Acknowledgments**: The linear modeling and hierarchical linear modeling chapters follows to some extent the presentation developed by Bruno Nicenboim in 
 https://github.com/vasishth/FGME_Stan_2017. The course notes have benefitted a lot from the lectures and writings of [Michael Betancourt](https://betanalpha.github.io/).
@@ -33,7 +36,7 @@ Please talk to me if you have difficulties installing anything, although be warn
 
 ### Motivation for course design
 
-Because statistics inherently depends on mathematics, it is very important to get a reasonably formal introduction to the topic. The usual, informal manner in which statistics is taught has been a failure in all Cognitive Science disciplines.  We see this in the way statistics is routinely abused in psycholinguistics, psychology, and linguistics, among other areas. Some examples: 
+Because statistics inherently depends on mathematics, it is very important to get a reasonably formal introduction to the topic. The usual, informal manner in which statistics is taught has been a failure in all Cognitive Science disciplines.  We see this in the way statistics is routinely abused in psycholinguistics, psychology, and linguistics, among other areas. Some examples from psycholinguistics are mentioned alongside each point: 
 
   - deciding that an effect is ``reliable'' if $p<0.05$ in a severely underpowered study; for examples, see @JaegerEtAl2017, @VasishthMertzenJaegerGelman2018.
   - inconrrectly arguing that the null is true when $p>0.05$, or arguing that the null is false when is a bit over $p>0.05$, but the researcher wants desperately that p be less than 0.05;  for discussion, see @VasishthNicenboimStatMeth, @NicenboimVasishth2016.
@@ -46,7 +49,7 @@ Most people do not make these mistakes intentionally; I have made them too. For 
 
 In a modest attempt to at least partly remedy this situation, the present course attempts to provide some understanding of the basic formal ideas behind statistical modeling. 
 
-If you find mistakes, please open an issue here: https://github.com/vasishth/BayesianLinearModeling. 
+If you find mistakes, please open an issue [here](https://github.com/vasishth/BayesianLinearModeling). 
 
 The central idea we will explore in this course is: how to 
 use Bayes' theorem for data analysis. In order to understand the methodology, some passive understanding of the following topics needs to be in place:
@@ -55,13 +58,14 @@ use Bayes' theorem for data analysis. In order to understand the methodology, so
   - Basic probability theory:
     - sum and product rule
     - conditional probability
+    - independence of events
     - Bayes' rule
   - The theory of random variables
     - probability density/mass function $f(x)$ vs cumulative distribution function $F(x)$
-    - inverse CDF $F^{-1}(x)$
+    - inverse CDF, $F^{-1}(x)$
     - expectation and variance of (transformations of) random variables
   - Probability density/mass functions
-    - Ten common pdf's
+    - Ten common pdfs
     - Jointly distributed random variables
     - Sums of random variables
     - Marginal and conditional pdfs
@@ -69,11 +73,13 @@ use Bayes' theorem for data analysis. In order to understand the methodology, so
     - Multivariate normal distributions
   - Maximum likelihood estimation
     - How to find MLEs analytically
-    - How to find MLEs using computational methods
+    - How to find MLEs using R
     - Visualization of log likelihood
 
-Without a clear understanding of these concepts, confusion is an inevitable outcome. 
-So we will begin with these concepts. But before we dive in, it may help to know where we are going in this course.
+Without a clear understanding of these concepts, generalized confusion is an inevitable outcome. 
+This is why it is so important to expend some energy in understanding these concepts. One common question I get is: *why do I need to know this*? The answer is: Please trust me that you do.
+
+But before we dive in, it may help to step back and get an overview of  where we are going in this course.
 
 ### Preview: Steps in Bayesian analysis
 
@@ -328,7 +334,10 @@ In the continuous case, the cdf or distribution function is defined as:
 P(x<X) = F(x<X) =\int_{-\infty}^{X} f(x)\, dx
 \end{equation}
 
-\textbf{Note}: Almost any function can be a pdf as long as it sums to 1 over the sample space. Here is an example of a function that doesn't sum to 1:
+### The normalization constant in pdfs
+
+
+Almost any function can be a pdf as long as it sums to 1 over the sample space. Here is an example of a function that doesn't sum to 1:
 
 \begin{equation}
 f(x)=\exp[-\frac{(x-\mu)^2}{2 \sigma^2}]
@@ -372,6 +381,8 @@ plot(function(x) norm(x), -3, 3,
 ### area under the curve sums to 1:
 integrate(norm,lower=-Inf,upper=Inf)
 ```
+
+### The pdf f(x) and the cdf F(x)
 
 Recall that 
 a random variable $X$ is a function $X : S \rightarrow \mathbb{R}$ that associates to each outcome
@@ -463,13 +474,24 @@ Hence, for any continuous random variable,
 P\{X < a\} = P \{X \leq a \} = F(a) = \int_{-\infty}^{a} f(x) \, dx 
 \end{equation}
 
-$F$ is the \textbf{cumulative distribution function}. Differentiating both sides in the above equation:
+$F$ is the **cumulative distribution function**. Differentiating both sides in the above equation:
 
 \begin{equation}
-\frac{d F(a)}{da} = f(a) 
+\frac{d F(x)}{dx} = f(x) 
 \end{equation}
 
-The density (PDF) is the derivative of the CDF. 
+Just to reiterate this: the density (PDF) is the derivative of the CDF. You can go back and forth between the pdf and the CDF by integrating or differentiating:
+
+\begin{equation}
+\int^b_a f(x) \, dx \Rightarrow F(a)
+\end{equation}
+
+\begin{equation}
+dF(x)/dx = f(x)
+\end{equation}
+
+$F(x)$ will give you some probability $u$.
+The **inverse of the cdf**, $F^{-1}(u)$ gives us back the quantile $x$ such that $F(x)=u$. *This fact will be of great relevance to us*.
 
 ### Some basic results concerning random variables
 
@@ -546,7 +568,11 @@ pnorm(1)-pnorm(0)
 
 \end{enumerate}
 
+Why are we going through these basic results? As Betancourt puts it (see [here](https://www.youtube.com/watch?v=VnNdhsm0rJQ), at minute 9:55): ``Bayesian computations reduce to (computing) expectations and, consequently, to integration.'' We will be computing expectations a lot in this course, using software. We will never have to do this by hand because we will be working in high-dimensional spaces and will have no choice but to use numerical approximations.
+
 ## Ten important distributions
+
+These distributions are generally used quite frequently in Bayesian data analyses, especially in psychology and linguistics applications. For the first few distributions, we show the pdf and cdf. The Binomial and Poisson are discrete distributions, the rest are continuous.
 
 ### Binomial
 
@@ -562,13 +588,49 @@ P(x\mid n, p) = {n \choose k} p^k (1-p)^{n-k}
 
 [Recall that: ${n \choose k} = \frac{n!}{(n-r)! r!}$. Hence, given $x$ and $n$, this term will be a constant.]
 
-**Mean and variance**:
+Figure \ref{fig:bin} shows the pmf and cdf.
+
+```{r echo=FALSE,fig.cap="\\label{fig:bin}Example of the pmf Bin(n=10,prob=.50)."}
+op<-par(mfrow=c(1,2),pty="s")
+k <- c(1:10)
+plot(k,dbinom(k,size=10,prob=.50),type="h",
+     main="Bin(n=30,prob=.50)")
+
+fx <- function(x) {
+  if(x >= 0 && x < 3) {
+    res <-  pbinom(2,size=10,prob=0.50)
+  } else if(x >=3 && x < 5) {
+    res <- pbinom(4,size=10,prob=0.50)-pbinom(2,size=10,prob=0.50)
+  } else if(x >= 5 && x < 6) {
+    res <-  pbinom(5,size=10,prob=0.50)-pbinom(4,size=10,prob=0.50)
+  } else if(x >= 7 && x < 10) {
+    res <-  pbinom(9,size=10,prob=0.50)-pbinom(6,size=10,prob=0.50)
+  } else {
+    res <- 0
+  }
+
+  return(res)
+}
+
+fx   <- Vectorize(fx)
+grid <- 0:10
+p    <- fx(grid)
+cdf  <- cumsum(p)
+
+plot(grid, cdf, type = 'p', ylim = c(0, 1), col = 'steelblue',
+     xlab = 'x', ylab = expression(F(x)), pch = 19, las = 1)
+segments(x0 = grid, x1 = grid + 1, y0 = cdf)
+segments(x0 = grid + 1, y0 = c(cdf[-1], 1), y1 = cdf, lty = 2)
+```
+
+
+**Expectation and variance**:
 
 The mean is $np$ and the variance $np(1-p)$.
 
 When $n=1$ we have the Bernoulli distribution.
 
-**Important functions in R**
+**Relevant functions in R**
 
 \begin{verbatim}
 ###pmf:
@@ -582,6 +644,41 @@ rbinom(n, size, prob)
 \end{verbatim}
 
 \textbf{Notational conventions}: A binomial distribution, $n$ trials each with probability $\theta$ of occurring, is written $Bin(\theta,n)$. Given a random variable with this distribution, we can write $R\mid \theta, n \sim Bin(\theta,n)$ or $p(r\mid \theta, n) = Bin(\theta,n)$, where $r$ is the realization of $R$. We can drop the conditioning in $R\mid \theta, n$, so that we can write: given $R\sim Bin(\theta,n)$, what is $Pr(\theta_1 < \theta < \theta_2\mid r, n)$.
+
+### Poisson
+
+**Examples**:
+traffic accidents, typing errors, customers arriving in a bank, number of fixations in reading.		
+
+**Probability density function**
+
+Let $\lambda$ be the average number of events in the time interval $[0,1]$. Let the random variable $X$ count the number of events occurring in the interval. Then:
+
+\begin{equation}
+f_{X}(x)=\mathbb{P}(X=x)=\mathrm{e}^{-\lambda}\frac{\lambda^{x}}{x!},\quad x=0,1,2,\ldots
+\end{equation}
+
+**Expectation and variance**
+
+\begin{equation}
+E[X]= \lambda
+\end{equation}
+
+\begin{equation}
+Var(X)= \lambda
+\end{equation}
+
+
+**Relevant functions in R**
+
+\begin{verbatim}
+dpois(x, lambda)
+ppois(q, lambda, lower.tail = TRUE)
+qpois(p, lambda, lower.tail = TRUE)
+rpois(n, lambda)
+\end{verbatim}
+
+
 
 ### Uniform
 
@@ -611,7 +708,18 @@ F_{X}(a)=
 \label{eq-unif-cdf}
 \end{equation}
 
-**Mean and variance**:
+The pdf and cdf are show in Figure \ref{fig:unifdistr}.
+
+```{r echo=FALSE,fig.cap="\\label{fig:unifdistr}Uniform(0,1)  distribution, pdf and cdf."}
+op<-par(mfrow=c(1,2),pty="s")
+plot(function(x) dunif(x,min=0,max=1), 0, 1,
+      main = "Uniform(0,1) density",
+              ylab="density",xlab="X")
+x<-seq(0,1,by=0.001)
+plot(x,punif(x,min=0,max=1),type="l",xlab="X")
+```
+
+**Expectation and variance**:
 
 
 \begin{equation}
@@ -622,7 +730,8 @@ E[X]= \frac{\beta+\alpha}{2}
 Var(X)= \frac{(\beta-\alpha)^2}{12}
 \end{equation}
 
-**Important functions in R**
+
+**Relevant functions in R**
 
 \begin{verbatim}
 dunif(x, min = 0, max = 1, log = FALSE)
@@ -643,10 +752,13 @@ f_{X}(x)=\frac{1}{\sigma\sqrt{2\pi}}e^{ \frac{-(x-\mu)^{2}}{2\sigma^{2}}},\quad 
 
 We write $X\sim\mathsf{norm}(\mathtt{mean}=\mu,\,\mathtt{sd}=\sigma)$, and the associated $\mathsf{R}$ function is \texttt{dnorm(x, mean = 0, sd = 1)}.
 
-```{r,fig.cap="\\label{fig:normaldistr}Normal distribution."}
+```{r echo=FALSE,fig.cap="\\label{fig:normaldistr}Normal distribution."}
+op<-par(mfrow=c(1,2),pty="s")
 plot(function(x) dnorm(x), -3, 3,
-      main = "Normal density",ylim=c(0,.4),
+      main = "Normal(0,1)",
               ylab="density",xlab="X")
+x<-seq(-3,3,by=0.001)
+plot(x,pnorm(x),main="",type="l",xlab="X")
 ```
 
 If $X$ is normally distributed with parameters $\mu$ and $\sigma^2$, then $Y=aX+b$ is normally distributed with parameters $a\mu + b$ and $a^2\sigma^2$.
@@ -683,7 +795,7 @@ F_X(a) = P\{ X\leq a \} = P\left( \frac{X - \mu}{\sigma} \leq \frac{a - \mu}{\si
 The standardized version of a normal
 random variable X is used to compute specific probabilities relating to X (it is also easier to compute probabilities from different CDFs so that the two computations are comparable).
 
-**Mean and variance**
+**Expectation and variance**
 
 \begin{equation}
 E[X]= \mu 
@@ -694,7 +806,7 @@ Var(X)= \sigma^2
 \end{equation}
 
 
-**Important functions in R**
+**Relevant functions in R**
 
 \begin{verbatim}
 dnorm(x, mean = 0, sd = 1, log = FALSE)
@@ -709,19 +821,28 @@ rnorm(n, mean = 0, sd = 1)
 
 **Probability density function**
 
+
 \begin{equation}
-f_{X}(x)=\frac{1}{x\sigma\sqrt{2\pi}}e^{ \frac{-(\log x-\log \mu)^{2}}{2\sigma^{2}}},\quad 0 < x < \infty.
+f_{X}(x)=\frac{1}{x\sigma\sqrt{2\pi}}e^{ \frac{-(\log x- \mu)^{2}}{2\sigma^{2}}},\quad 0 < x < \infty.
 \end{equation}
 
 
-```{r,fig.cap="\\label{fig:normaldistr}Normal distribution."}
-plot(function(x) dlnorm(x), 0, 3,
-      main = "Log-Normal density",
+```{r ECHO=FALSE,fig.cap="\\label{fig:lnormaldistr}LogNormal(0,1) distribution."}
+op<-par(mfrow=c(1,2),pty="s")
+plot(function(x) dlnorm(x), 0, 4,
+      main = "LogNormal(0,1)",
               ylab="density",xlab="X")
+x<-seq(0,4,by=0.001)
+plot(x,plnorm(x),main="",type="l",xlab="X")
 ```
 
+Note:
 
-**Mean and variance**
+-$\mu,\sigma$ are on the log scale.
+-If $X\sim LogNormal(\mu,\sigma)$, this is the same as saying that $\log(X)$ is normally distributed.
+
+
+**Expectation and variance**
 
 \begin{equation}
 E[X]= \mu + \sigma/2
@@ -732,47 +853,13 @@ Var(X)= \sigma^2
 \end{equation}
 
 
-**Important functions in R**
+**Relevant functions in R**
 
 \begin{verbatim}
 dlnorm(x, meanlog = 0, sdlog = 1)
 plnorm(q, meanlog = 0, sdlog = 1, lower.tail = TRUE)
 qlnorm(p, meanlog = 0, sdlog = 1, lower.tail = TRUE)
 rlnorm(n, meanlog = 0, sdlog = 1)
-\end{verbatim}
-
-### Poisson
-
-**Examples**:
-traffic accidents, typing errors, customers arriving in a bank, number of fixations in reading.		
-
-**Probability density function**
-
-Let $\lambda$ be the average number of events in the time interval $[0,1]$. Let the random variable $X$ count the number of events occurring in the interval. Then:
-
-	\begin{equation}
-	f_{X}(x)=\mathbb{P}(X=x)=\mathrm{e}^{-\lambda}\frac{\lambda^{x}}{x!},\quad x=0,1,2,\ldots
-	\end{equation}
-\end{quote}
-
-**Mean and variance**
-
-\begin{equation}
-E[X]= \lambda
-\end{equation}
-
-\begin{equation}
-Var(X)= \lambda
-\end{equation}
-
-
-**Important functions in R**
-
-\begin{verbatim}
-dpois(x, lambda)
-ppois(q, lambda, lower.tail = TRUE)
-qpois(p, lambda, lower.tail = TRUE)
-rpois(n, lambda)
 \end{verbatim}
 
 
@@ -803,13 +890,13 @@ Beta(a,b) = \int_0^1 x^{a-1}(1-x)^{b-1}\, dx
 We write $X\sim\mathsf{beta}(\mathtt{shape1}=a,\,\mathtt{shape2}=b)$. 
 
 
-**Mean and variance**
+**Expectation and variance**
 
 \begin{equation} 
 E[X]=\frac{a}{a+b}\mbox{ and }Var(X)=\frac{ab}{\left(a+b\right)^{2}\left(a+b+1\right)}.
 \end{equation}
 
-**Important functions in R**
+**Relevant functions in R**
 
 \begin{verbatim}
 dbeta(x, shape1, shape2)
@@ -834,7 +921,7 @@ f(x)=  \left\{
 \end{array} \right.
 \end{equation*}
 
-**Mean and variance**
+**Expectation and variance**
 
 \begin{equation}
 E[X] =  \frac{1}{\lambda}
@@ -844,7 +931,7 @@ E[X] =  \frac{1}{\lambda}
 Var(X) = \frac{1}{\lambda^2}
 \end{equation}
 
-**Important functions in R**
+**Relevant functions in R**
 
 \begin{verbatim}
 dexp(x, rate=1)
@@ -882,7 +969,7 @@ $\Gamma(\alpha)$ is called the gamma **function** (note: it's lower case gamma, 
 
 Note that for integral values of $n$, $\Gamma(n)=(n-1)!$ (follows from above equation).
 
-**Mean and variance**
+**Expectation and variance**
 
 \begin{equation}
 E[X]=\alpha/\lambda
@@ -892,7 +979,7 @@ E[X]=\alpha/\lambda
 Var(X) = \alpha/\lambda^{2}
 \end{equation}
 
-**Important functions in R**
+**Relevant functions in R**
 
 \begin{verbatim}
 dgamma(x, rate, scale = 1/rate)
@@ -950,7 +1037,7 @@ is said to have Student's $t$ distribution with $r$ degrees of freedom, and we w
 We will write 
 $X\sim t(\mu,\sigma^2,r)$, where $r$ is the degrees of freedom $(n-1)$, where $n$ is sample size.
 
-**Mean and variance**
+**Expectation and variance**
 
 \begin{equation}
 E[X]= 0 \hbox{ if } n> 1 \hbox{ otherwise undefined}
@@ -960,7 +1047,7 @@ E[X]= 0 \hbox{ if } n> 1 \hbox{ otherwise undefined}
 Var(X) = \frac{n}{n-2}, \hbox{ when } n>2 \hbox{ otherwise undefined}
 \end{equation}
 
-**Important functions in R**
+**Relevant functions in R**
 
 \begin{verbatim}
 dt(x, df)
@@ -977,22 +1064,22 @@ rt(n, df)
 \begin{tabular}{ccccc}
 \textbf{Distribution} & \textbf{PMF/PDF and Support} & \textbf{Expected Value}  & \textbf{Variance}\\
 \hline 
-\shortstack{Binomial \\ Bin($n, p$)} & \shortstack{$P(X=k) = {n \choose k}p^k q^{n-k}$  \\ $k \in \{0, 1, 2, \dots n\}$}& $np$ & $npq$ \\
+\shortstack{Binomial \\ $Bin(n, p)$} & \shortstack{$P(X=k) = {n \choose k}p^k q^{n-k}$  \\ $k \in \{0, 1, 2, \dots n\}$}& $np$ & $npq$ \\
 \hline
-\shortstack{Uniform \\ Unif($a, b$)} & \shortstack{$ f(x) = \frac{1}{b-a}$ \\$ x \in (a, b) $} & $\frac{a+b}{2}$ & $\frac{(b-a)^2}{12}$ \\
+\shortstack{Poisson \\ $Pois(\lambda)$} & \shortstack{$P(X=k) = \frac{e^{-\lambda}\lambda^k}{k!}$ \\ $k \in \{$0, 1, 2, \dots $\}$} & $\lambda$ & $\lambda$ \\
 \hline
-\shortstack{Normal \\ $Normal(\mu, \sigma^2)$} & \shortstack{$f(x) = \frac{1}{\sigma \sqrt{2\pi}} e^{-\sfrac{(x - \mu)^2}{(2 \sigma^2)}}$ \\ $x \in (-\infty, \infty)$} & $\mu$ \\
+\shortstack{Uniform \\ $Unif(a, b)$} & \shortstack{$ f(x) = \frac{1}{b-a}$ \\$ x \in (a, b) $} & $\frac{a+b}{2}$ & $\frac{(b-a)^2}{12}$ \\
 \hline
-\shortstack{Log-Normal \\ $LogNormal(\mu,\sigma^2)$} & \shortstack{$\frac{1}{x\sigma \sqrt{2\pi}}e^{-(\log x - \mu)^2/(2\sigma^2)}$\\$x \in (0, \infty)$} & $\theta = e^{ \mu + \sigma^2/2}$ & $\theta^2 (e^{\sigma^2} - 1)$ \\
+\shortstack{Normal \\ $Normal(\mu, \sigma)$} & \shortstack{$f(x) = \frac{1}{\sigma \sqrt{2\pi}} e^{-\sfrac{(x - \mu)^2}{(2 \sigma^2)}}$ \\ $x \in (-\infty, \infty)$} & $\mu$ \\
 \hline
-\shortstack{Poisson \\ Pois($\lambda$)} & \shortstack{$P(X=k) = \frac{e^{-\lambda}\lambda^k}{k!}$ \\ $k \in \{$0, 1, 2, \dots $\}$} & $\lambda$ & $\lambda$ \\
+\shortstack{Log-Normal \\ $LogNormal(\mu,\sigma)$} & \shortstack{$\frac{1}{x\sigma \sqrt{2\pi}}e^{-(\log x - \mu)^2/(2\sigma^2)}$\\$x \in (0, \infty)$} & $\theta = e^{ \mu + \sigma^2/2}$ & $\theta^2 (e^{\sigma^2} - 1)$ \\
 \hline
 \shortstack{Beta \\ Beta($a, b$)} & \shortstack{$f(x) = \frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)}x^{a-1}(1-x)^{b-1}$\\$x \in (0, 1) $} & $\mu = \frac{a}{a + b}$  & $\frac{\mu(1-\mu)}{(a + b + 1)}$  \\
 \hline
 \shortstack{Exponential \\ $Exp(\lambda)$} & \shortstack{$f(x) = \lambda e^{-\lambda x}$\\$ x \in (0, \infty)$} & $\frac{1}{\lambda}$  & $\frac{1}{\lambda^2}$ \\
 \hline
 \shortstack{Gamma \\ $Gamma(a, \lambda)$} & \shortstack{$f(x) = \frac{1}{\Gamma(a)}(\lambda x)^ae^{-\lambda x}\frac{1}{x}$\\$ x \in (0, \infty)$} & $\frac{a}{\lambda}$  & $\frac{a}{\lambda^2}$ \\
-\shortstack{Student-$t$ \\ $t_n$} & \shortstack{$\frac{\Gamma((n+1)/2)}{\sqrt{n\pi} \Gamma(n/2)} (1+x^2/n)^{-(n+1)/2}$\\$x \in (-\infty, \infty)$} & $0$ if $n>1$ & $\frac{n}{n-2}$ if $n>2$ \\
+\shortstack{Student-$t$ \\ $t(n)$} & \shortstack{$\frac{\Gamma((n+1)/2)}{\sqrt{n\pi} \Gamma(n/2)} (1+x^2/n)^{-(n+1)/2}$\\$x \in (-\infty, \infty)$} & $0$ if $n>1$ & $\frac{n}{n-2}$ if $n>2$ \\
 \hline
 \end{tabular}
 \end{center}
@@ -1331,9 +1418,44 @@ The correlation is usually denoted by $\rho_{X,Y}$ or simply $\rho$ if the rando
 
 This is a very important distribution that we will need in linear mixed models.
 
-#### Graphical intuition
+Consider the bivariate case first.
+Suppose we have two univariate random variables $U0 \sim Normal(\mu_0,\sigma_{u0})$ and 
+$U1 \sim Normal(\mu_1,\sigma_{u1})$ that have  covariance $\rho \sigma_{u0} \sigma_{u1}$.
+We write this as:
+
+\begin{equation}\label{eq:jointpriordist1}
+\begin{pmatrix}
+  U_0 \\ 
+  U_1 \\
+\end{pmatrix}
+\sim 
+\mathcal{N} \left(
+\begin{pmatrix}
+  \mu_0 \\
+  \mu_1 \\
+\end{pmatrix},
+\Sigma
+\right)
+\end{equation}
+
+The variances and covariances between the two random variables are described by a $2\times 2$ variance-covariance matrix. The diagonals have the variances, and the off-diagonals have the covariance between the two random variables.
+
+\begin{equation}\label{eq:covmat}
+\Sigma
+=
+\begin{pmatrix}
+\sigma _{u0}^2  & \rho \sigma _{u0}\sigma _{u1}\\
+\rho \sigma _{u0}\sigma _{u1}    & \sigma _{u1}^2\\
+\end{pmatrix}
+\end{equation}
+
+We develop some graphical intuition about bivariate distributions next.
+
+#### Graphical intuition for the bivariate case
 
 If we have two independent random variables U0, U1, and we examine their joint distribution, we can plot a 3-d plot which shows, u0, u1, and f(u0,u1). 
+
+
 
 *Bivariate distribution with no  correlation (independent random variables)*:
 E.g., 
@@ -1378,6 +1500,25 @@ z <- outer(u0, u1, FUN = f)
 persp(u0, u1, z, theta = -30, phi = 30, ticktype = "detailed")
 ```
 
+#### Visualizing conditional distributions in a bivariate
+
+You can run the following code to get a visualization of what a conditional distribution looks like when we take ``slices'' from the conditioning random variable:
+
+```{r,eval=FALSE}
+bivn<-mvrnorm(1000,mu=c(0,1),Sigma=matrix(c(1,0,0,2),2))
+bivn.kde<-kde2d(bivn[,1],bivn[,2],n=50)
+
+for(i in 1:50){
+  plot(bivn.kde$z[i,1:50],type="l",ylim=c(0,0.1))
+  Sys.sleep(.5)
+}
+```
+
+If you run this code, you will see ``slices'' from the bivariate distribution. 
+
+
+#### Formal definition of the multivariate normal
+
 Having acquired a graphical intuition, we turn to the formal definitions.
 Recall that in the univariate normal distribution:
 
@@ -1397,7 +1538,7 @@ Generalizing this to the multivariate case:
 Q= (x-\mu)' \Sigma ^{-1} (x-\mu)	
 \end{equation}
 
-$\Sigma$ is a variance-covariance matrix shown in the examples above, and $\Sigma^{-1}$ is its inverse.
+$\Sigma$ is a variance-covariance matrix, and $\Sigma^{-1}$ is its inverse.
 
 So, for multivariate case:
 
@@ -1411,27 +1552,12 @@ Properties of the multivariate normal (MVN) X:
 
 \begin{itemize}
 	\item Linear combinations of X are normal distributions.
-	\item All subset's of X's components have a normal distribution.
+	\item All subsets of X's components have a normal distribution.
 	\item Zero covariance implies independent distributions.
 	\item Conditional distributions are normal.
 \end{itemize}
 
 
-#### Visualizing conditional distributions
-
-You can run the following code to get a visualization of what a conditional distribution looks like when we take ``slices'' from the conditioning random variable:
-
-```{r,eval=FALSE}
-bivn<-mvrnorm(1000,mu=c(0,1),Sigma=matrix(c(1,0,0,2),2))
-bivn.kde<-kde2d(bivn[,1],bivn[,2],n=50)
-
-for(i in 1:50){
-  plot(bivn.kde$z[i,1:50],type="l",ylim=c(0,0.1))
-  Sys.sleep(.5)
-}
-```
-
-If you run this code, you will see ``slices'' from the bivariate distribution. 
 
 ## Maximum likelihood estimation
 
@@ -1683,4 +1809,6 @@ Finally, we print out the estimated parameter values that maximize the likelihoo
 (estimates.default<-opt.vals.default$par)
 ```
 
-Knowledge of maximum likelihood estimation will be needed in the next section.
+Knowledge of maximum likelihood estimation will be needed in the next chapter.
+
+
