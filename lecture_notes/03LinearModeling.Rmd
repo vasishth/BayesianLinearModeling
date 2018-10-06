@@ -591,7 +591,7 @@ We are basically fitting a linear model, $\alpha$ represents the intercept (name
 
 We'll write this in brms as follows.
 
-```{r}
+```{r results="hide"}
 priors <- c(set_prior("normal(0, 2000)", 
                       class = "Intercept"),
             set_prior("normal(0, 500)", 
