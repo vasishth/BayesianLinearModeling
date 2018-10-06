@@ -1,4 +1,4 @@
-# Introduction to Bayesian data analysis
+# Introduction to Bayesian data analysis \label{introbayes}
 
 Recall Bayes' rule:
 
