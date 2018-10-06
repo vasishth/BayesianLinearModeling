@@ -6,4 +6,5 @@ License
 
 This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.][by-nc-sa].
 
-[![Creative Commons License][lecture_notes/licence/licence.png]][by-nc-sa]
+[![Creative Commons License](https://github.com/vasishth/BayesianLinearModeling/blob/master/lecture_notes/license/licence.png)
+
