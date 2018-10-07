@@ -49,7 +49,7 @@ Most people do not make these mistakes intentionally; I have made them too. For 
 
 In a modest attempt to at least partly remedy this situation, the present course attempts to provide some understanding of the basic formal ideas behind statistical modeling. 
 
-If you find mistakes, please open an issue [here](https://github.com/vasishth/BayesianLinearModeling). 
+If you find mistakes, please open an issue [here](https://github.com/vasishth/BayesianLinearModeling). Alternatively, if you know to, you can alternatively [fork and make a pull request](https://help.github.com/articles/fork-a-repo/).
 
 The central idea we will explore in this course is: how to 
 use Bayes' theorem for data analysis. In order to understand the methodology, some passive understanding of the following topics needs to be in place:
