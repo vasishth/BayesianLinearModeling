@@ -1,0 +1,449 @@
+# Hierarchical linear modeling 
+
+## Example 1: Subject vs object relatives in English
+
+We begin with a classic question from the psycholinguistics literature: are subject relatives easier to process than object relatives? The data come from Experiment 1 in a classic paper by @grodner.
+
+### Scientific question: Is there a subject relative advantage in reading?
+
+(1a) The reporter who the photographer *sent* to the editor was hoping for a good story. (object gap)
+
+(1b) The reporter who *sent* the photographer to the editor was hoping for a good story. (subject gap)
+
+to-do explain
+
+### Load data and reformat
+
+```{r open_swetsetal}
+gg05e1 <- read.table("data/GrodnerGibson2005E1.csv",sep=",", header=T)
+gge1 <- gg05e1 %>% filter(item != 0)
+
+gge1 <- gge1 %>% mutate(word_positionnew = ifelse(item != 15 & word_position > 10, word_position-1, word_position)) 
+#there is a mistake in the coding of word position,
+#all items but 15 have regions 10 and higher coded
+#as words 11 and higher
+
+## get data from relative clause verb:
+gge1crit <- subset(gge1, ( condition == "objgap" & word_position == 6 ) |
+            ( condition == "subjgap" & word_position == 4 ))
+```
+
+### Experiment design: Latin square and crossed subject and items
+
+Two important properties of these data are worth noticing. 
+
+#### Latin-square design
+
+First, the design is the classic repeated measure Latin square set-up. To see what this means, 
+first look at the number of subjects and items, and the number of rows in the data frame:
+
+```{r}
+length(unique(gge1crit$subject))
+length(unique(gge1crit$item))
+dim(gge1crit)[1]
+```
+
+There are 42 subjects and 16 items. There are $42\times 16 = 672$ rows in the data frame. Notice also that each subject sees exactly eight object gap and eight subject gap sentences:
+
+```{r}
+head(xtabs(~subject+condition,gge1crit),n=4)
+```
+
+The researchers created 16 sets of subject and object relatives; one set is the pair of sentences shown in (1a) and (1b) above. In the data frame, both these two items have the same id 1, but no one subject will see both sentences in any one set. For example, item 1 is seen by subject 1 in the object gap condition (1a) and item 1 is seen by subject 2 in the subject gap condition (1b):
+
+```{r}
+subset(gge1crit,item==1)[1:2,]
+```
+
+This is called a Latin-square design because of the following layout. See Table \ref{tab:latinsq}.
+
+\begin{table}[!htbp]
+\caption{The Latin-square design in repeated measures experiments.}
+\begin{center}
+\begin{tabular}{ccc}
+item id & group 1 & group 2\\
+1       & objgap       & subjgap \\
+2       & subjgap       & objgap \\
+3       & objgap       & subjgap \\
+4       & subjgap       & objgap \\
+\vdots  & \vdots  & \vdots \\
+16      & subjgap       & objgap \\
+\end{tabular}
+\end{center}
+\label{tab:latinsq}
+\end{table}
+
+Each subject is randomly assigned to Group 1 or 2, and one should have an even number of subjects in order to have a balanced data-set. Hence the 42 subjects in the Grodner and Gibson data: 21 in each group.
+
+Latin square designs are used in psychology and linguistics (and other areas) because they are optimal in several ways.
+
+Soon we will need to generate a fake data-frame with a repeated measures Latin square design. We can do this using R as follows [source: @VasishthMertzenJaegerGelman2018]: 
+
+```{r}
+library(MASS)
+nitem <- 16
+nsubj <- 42
+## prepare data frame for two condition in a latin square design:
+g1<-data.frame(item=1:nitem,
+                 cond=rep(c("objgap","subjgap"),nitem/2))
+g2<-data.frame(item=1:nitem,
+                 cond=rep(c("objgap","subjgap"),nitem/2))
+
+## assemble data frame:
+gp1<-g1[rep(seq_len(nrow(g1)),
+              nsubj/2),]
+gp2<-g2[rep(seq_len(nrow(g2)),
+              nsubj/2),]
+
+fakedat<-rbind(gp1,gp2)
+dim(fakedat)
+## add subjects:
+fakedat$subj<-rep(1:nsubj,each=nitem)
+fakedat<-fakedat[,c(3,1,2)]  
+fakedat$so<-ifelse(fakedat$cond=="objgap",1,-1)
+```
+
+For example, subject 1 delivers the following data:
+
+```{r}
+head(fakedat,n=17)
+```
+
+#### Fully crossed subjects and items
+
+In the data, each subject sees exactly one item in one of the two conditions:
+
+```{r}
+xtabs(~subject+item,gge1crit)
+```
+
+If there were some zeros in the above matrix, we would have an imbalance, and this would then be  partially crossed. This kind of imbalance arises in data-sets due to missing data, where missingness can happen due to different reasons. We return to this in later sections.
+
+### The implied generative model
+
+The above design implies a particular statistical model that takes us beyond the linear model.
+
+A simple linear model of the above data would be:
+
+\begin{equation}
+y = \alpha + \beta * x + \varepsilon \hbox{ where } \varepsilon \sim Normal(0,\sigma)
+\end{equation}
+
+Here, object gaps are coded +1, subject gaps -1. See @SchadEtAlcontrasts for an explanation.
+
+```{r}
+gge1crit$so<-ifelse(gge1crit$condition=="objgap",1,-1)
+```
+
+A Normal likelihood doesn't seem well motivated, so we will use the log-normal:
+
+```{r fig.cap="\\label{fig:ggrtdistrn}Distribution of reading times in the Grodner and Gibson Experiment 1 data, at the critical region."}
+plot(density(gge1crit$rawRT),main="Grodner and Gibson Expt 1",xlab="RTs (ms)")
+```
+
+#### Between subject variability in mean reading time
+
+But this model would ignore the fact that we have multiple subjects that may have different mean reading times ($\alpha$) and different object gap processing costs. Some subjects are slower and some faster, and some may suffer more with object gaps because of lower working memory capacity, lower attention, etc. (of course, we are speculating here, we have no measurements of these variables).  See Figure \ref{fig:subjint}.
+
+```{r fig.cap="\\label{fig:subjint}Between subject variability in mean reading times."}
+hist(with(gge1crit,tapply(rawRT,subject,mean)),
+     main="Between subject variability",
+     xlab="mean RTs",freq=FALSE)
+```
+
+In the linear model, we can express the assumption that the grand mean intercept $\alpha$ needs an adjustment by subject, where subjects are indexed from $j=1,\dots,J$:
+
+\begin{equation}
+y_j = \alpha + u_{0j} + \beta * x_j + \varepsilon_j 
+\end{equation}
+
+where 
+
+- $\varepsilon_j \sim Normal(0,\sigma)$ 
+- $u_{0j} \sim Normal(0,\sigma_{u0})$ 
+
+#### Between item variability in mean reading time
+
+We also see that items also differ, some would be read faster and some slower:
+
+```{r fig.cap="\\label{fig:itemint}Between item variability in mean reading times."}
+hist(with(gge1crit,tapply(rawRT,item,mean)),
+     main="Between item variability",
+     xlab="mean RTs",freq=FALSE)
+```
+
+
+For items ranging from $i=1,\dots,I$, we can add this assumption to the model:
+
+\begin{equation}
+y_{ij} = \alpha + u_{0j} + w_{0i} + \beta * x_{ij} + \varepsilon_{ij}
+\end{equation}
+
+where
+
+- $\varepsilon_{ij} \sim Normal(0,\sigma)$
+- $u_{0j} \sim Normal(0,\sigma_{u0})$
+- $w_{0i} \sim Normal(0,\sigma_{w0})$
+
+This model is called a *varying intercepts model* with crossed varying intercepts for subjects and for items.
+
+#### Between subject and between item variability in objgap cost
+
+The object gap cost also varies by subject and by item. See Figure {fig:subjitemslope}. 
+
+```{r fig.cap="\\label{fig:subjitemslope}Between subject and item variability in object gap vs subject gap reading times."}
+op<-par(mfrow=c(1,2),pty="s")
+meanssubj<-with(gge1crit,tapply(rawRT,IND=list(subject,condition),mean))
+diff<-meanssubj[,2]-meanssubj[,1]
+
+hist(diff,
+     main="Between subject variability",xlab="mean objgap cost",freq=FALSE)
+
+meansitem<-with(gge1crit,tapply(rawRT,IND=list(item,condition),mean))
+diff<-meansitem[,2]-meansitem[,1]
+
+hist(diff,
+     main="Between item variability",xlab="mean objgap cost",freq=FALSE)
+```
+
+We can incorporate this assumption into the model by adding adjustments to the $\beta$ parameter:
+
+\begin{equation}
+y_{ij} = \alpha + u_{0j} + w_{0i} + (\beta + u_{1j} + w_{1i}) * x_{ij} + \varepsilon_{ij}
+\end{equation}
+
+where 
+
+  - $\varepsilon_{ij} \sim Normal(0,\sigma)$ 
+  - $u_{0j} \sim Normal(0,\sigma_{u0})$
+  - $u_{1j} \sim Normal(0,\sigma_{u1})$
+  - $w_{0i} \sim Normal(0,\sigma_{w0})$
+  - $w_{1i} \sim Normal(0,\sigma_{w1})$
+
+This is called the *varying intercepts and slopes* model with *no correlation* between the intercepts and slopes.
+
+There is one detail still missing in the model: the adjustments to the intercept and slope are correlated for subjects, and also for items. In other words, we have a bivariate distribution for the subject and item random effects:
+
+\begin{equation}
+y_{ij} = \alpha + u_{0j} + w_{0i} + (\beta + u_{1j} + w_{1i}) * x_{ij} + \varepsilon_{ij}
+\end{equation}
+
+where $\varepsilon_{ij} \sim Normal(0,\sigma)$ and 
+
+\begin{equation}\label{eq:covmat}
+\Sigma _u
+=
+\begin{pmatrix}
+\sigma _{u0}^2  & \rho _{u}\sigma _{u0}\sigma _{u1}\\
+\rho _{u}\sigma _{u0}\sigma _{u1}    & \sigma _{u1}^2\\
+\end{pmatrix}
+\quad 
+\Sigma _w
+=
+\begin{pmatrix}
+\sigma _{w0}^2  & \rho _{w}\sigma _{w0}\sigma _{w1}\\
+\rho _{w}\sigma _{w0}\sigma _{w1}    & \sigma _{w1}^2\\
+\end{pmatrix}
+\end{equation}
+
+\begin{equation}\label{eq:jointpriordist1}
+\begin{pmatrix}
+  u_0 \\ 
+  u_1 \\
+\end{pmatrix}
+\sim 
+\mathcal{N} \left(
+\begin{pmatrix}
+  0 \\
+  0 \\
+\end{pmatrix},
+\Sigma_{u}
+\right),
+\quad
+\begin{pmatrix}
+  w_0 \\ 
+  w_1 \\
+\end{pmatrix}
+\sim 
+\mathcal{N}\left(
+\begin{pmatrix}
+  0 \\
+  0 \\
+\end{pmatrix},
+\Sigma_{w}
+\right)
+\end{equation}
+
+This is a varying intercepts and slopes model with fully specified  variance-covariance matrices for the subject and item random effects. It is sometimes called the **maximal model**.
+
+### Implementing the model
+
+The above model is simple to implement in the Bayesian framework.
+
+#### Specify and visualize priors
+
+We define some priors first:
+
+\begin{enumerate}
+\item $\alpha \sim Normal(0,10)$
+\item $\beta \sim Normal(0,1)$
+\item Residual standard deviation: $\sigma \sim Normal(0,1)$
+\item All other standard deviations: $\sigma \sim Normal(0,1)$
+\item Correlation matrix: $\rho \sim LKJ(2)$. 
+\end{enumerate}
+
+The LKJ prior needs some explanation.
+
+As always, it is a good idea to visualize these priors. See Figure \ref{fig:priorsgg}.
+
+```{r results="hide"}
+priors_alpha <- c(0,10)
+priors_beta <- c(0,1)
+priors_sigma_e <- c(0,1)
+priors_sigma_u <- c(0,1)
+priors_sigma_w <- c(0,1)
+
+## code for visualizing lkj priors:
+fake_data <- list(x = rnorm(30,0,1),
+                  N = 30, R = 2) 
+
+stancode <- "
+data {
+  int<lower=0> N; 
+  real x[N]; 
+  int R;
+  }
+parameters {
+  real mu;
+  real<lower=0> sigma;
+}
+model {
+  x ~ normal(mu,sigma);  
+}
+generated quantities {
+  corr_matrix[R] LKJ05;
+  corr_matrix[R] LKJ1;
+  corr_matrix[R] LKJ2;
+  corr_matrix[R] LKJ4;
+  LKJ05 = lkj_corr_rng(R,.5);
+  LKJ1 = lkj_corr_rng(R,1);
+  LKJ2 = lkj_corr_rng(R,2);
+  LKJ4 = lkj_corr_rng(R,4);
+}
+"
+
+fitfake <- stan(model_code = stancode, pars = c("LKJ05","LKJ1","LKJ2","LKJ4"),
+                data = fake_data, chains = 4, 
+                iter = 2000)
+
+corrs<-extract(fitfake,pars=c("LKJ05[1,2]","LKJ1[1,2]","LKJ2[1,2]","LKJ4[1,2]"))
+```
+
+```{r visualizepriors, fig.cap="\\label{fig:priorsgg}Priors for the Godner and Gibson data."}
+op<-par(mfrow=c(2,3),pty="s")
+par(oma = rep(0, 4), mar = c(2.7, 2.7, 0.1, 0.1), mgp = c(1.7, 0.4, 0))
+b<-seq(-priors_alpha[2]*2,priors_alpha[2]*2,by=0.01)
+plot(b,dnorm(b,mean=priors_beta[1],sd=priors_beta[2]),type="l",ylab="density", 
+     xlab=expression(alpha),ylim=c(0, 0.5))
+plot(b,dnorm(b,mean=priors_beta[1],sd=priors_beta[2]),type="l",ylab="density",
+     xlab=expression(beta),ylim=c(0, 0.5))
+sig<-seq(0,priors_sigma_e[2]*3,by=0.01)
+plot(sig,dnorm(sig,mean=priors_sigma_e[1],sd=priors_sigma_e[2]),type="l",ylab="density",
+     xlab=expression(sigma[e]))
+plot(sig,dnorm(sig,mean=priors_sigma_u[1],sd=priors_sigma_u[2]),type="l",ylab="density",
+     xlab=expression(sigma[u[0]]))
+plot(sig,dnorm(sig,mean=priors_sigma_u[1],sd=priors_sigma_u[2]),type="l",ylab="density",
+     xlab=expression(sigma[w[0,1]]))
+plot(density(corrs[[3]],bw=0.15),ylab="density",xlab=expression(rho),xlim=c(-1,1),main="")
+```
+
+### Fit the model using brms
+
+```{r results="hide"}
+priors <- c(set_prior("normal(0, 10)", class = "Intercept"),
+                      set_prior("normal(0, 1)", class = "b", 
+                                coef = "so"),
+                      set_prior("normal(0, 1)", class = "sd"),
+                      set_prior("normal(0, 1)", class = "sigma"),
+                      set_prior("lkj(2)", class = "cor"))
+
+m_gg<-brm(rawRT~so + (1+so|subject) + (1+so|item),gge1crit,family=lognormal(),
+    prior=priors)
+```
+
+```{r}
+summary(m_gg)
+```
+
+```{r}
+stanplot(m_gg,type="hist")
+```
+
+### The prior predictive distribution
+
+to-do
+```{r}
+ggpriorpred<-"
+data {
+  int<lower = 1> N;
+  vector<lower = -1, upper = 1>[N] so;
+  int<lower = 1> J;
+  int<lower = 1> K;
+  int<lower = 1, upper = J> subj[N]; 
+  int<lower = 1, upper = K> item[N]; 
+}
+parameters {
+  real<lower = 0> sigma;
+  real<lower = 0> sigma_u0;
+  real<lower = 0> sigma_u1;
+  real<lower = 0> sigma_w0;
+  real<lower = 0> sigma_w1;
+  real alpha;
+  real beta;
+  vector[J] u0;
+  vector[J] u1;
+  vector[K] w0;
+  vector[K] w1;
+}
+model {
+  alpha ~ normal(6, 2);
+  beta  ~ normal(0, .01);
+  sigma ~ normal(0, 1);
+  sigma_u0 ~ normal(0, .5);
+  sigma_u1 ~ normal(0, .5);
+  sigma_w0 ~ normal(0, .5);
+  sigma_w1 ~ normal(0, .5);
+  u0 ~ normal(0, sigma_u0);
+  u1 ~ normal(0, sigma_u1);
+  w0 ~ normal(0, sigma_w0);
+  w1 ~ normal(0, sigma_w1);
+}
+generated quantities {
+  vector[N] y_sim;
+  for(i in 1:N){ 
+     y_sim[i] = lognormal_rng(alpha + u0[subj[i]] + w0[item[i]] +  (beta + u1[subj[i]] + w1[item[i]]) * so[i],sigma);
+  }
+}
+"
+```
+
+```{r cache=TRUE,results="hide"}
+dat<-list(N=42*16,J=42,K=16,subj=fakedat$subj,
+          item=fakedat$item,
+          so=fakedat$so)
+
+## fit model:
+mggpriorpred<-stan(model_code=ggpriorpred,
+                  data=dat,
+                  chains = 4, 
+                iter = 2000,control = list(adapt_delta=0.99,max_treedepth = 15))
+
+
+## extract and plot one of the data-sets:
+y_sim<-extract(mggpriorpred,pars="y_sim")
+op <- par(mfrow=c(2,5),pty="s")
+for(i in 1:10){
+hist(as.vector(y_sim$y_sim[i,]),main=paste("sample",i,sep=" "),xlab="y_sim",freq=FALSE)
+}  
+```
+
