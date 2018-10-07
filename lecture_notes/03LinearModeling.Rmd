@@ -553,7 +553,7 @@ We need to have data about the number of times the space bar was
 pressed for each observation, and add it to our list. It's a good idea to
 center the number of presses (a covariate) to have a
 clearer interpretation of the intercept. In general, centering predictors is
-always a good idea, for interpretability and for computational reasons.
+always a good idea, for interpretability and for computational reasons. See @SchadEtAlcontrasts for details on this point.
 
 ```{r, reading_noreading_sb}
 # We create the new column in the data frame
