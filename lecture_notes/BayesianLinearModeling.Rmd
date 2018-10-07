@@ -47,6 +47,7 @@ library(ggplot2)
 library(brms)
 library(rstan)
 theme_set(theme_classic()) 
+library(dplyr)
 ```
 \newpage
 
