@@ -1058,6 +1058,8 @@ rt(n, df)
 
 ### Summary of distributions
 
+This presentation is adapted from https://github.com/wzchen/probability_cheatsheet.
+
 \small
 \begin{center}
 \renewcommand{\arraystretch}{3.7}
