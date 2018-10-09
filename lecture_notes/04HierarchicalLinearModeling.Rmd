@@ -1,6 +1,6 @@
 # Hierarchical linear modeling 
 
-## Example 1: Subject vs object relatives in English
+## Example 1: Reading time differences in subject vs object relatives in English
 
 We begin with a classic question from the psycholinguistics literature: are subject relatives easier to process than object relatives? The data come from Experiment 1 in a paper by @grodner.
 
@@ -477,32 +477,9 @@ Figure \ref{fig:ggpost} shows the posterior distributions of the parameters on t
 
 \begin{itemize}
 \item The object relative takes longer to read than the subject relative, as predicted. We know this because the parameter b\_so is positive.
-\item The largest sources of variance are the subject intercepts, slopes, and the residual standard deviation. Look at sd\_subject parameters, and sigma.
-\item The by-item variance components are relatively small. Look at sd\_item parameters.
+\item The largest sources of variance are the subject intercepts, slopes, and the residual standard deviation. Look at the sd\_subject parameters, and sigma.
+\item The by-item variance components are relatively small. Look at the sd\_item parameters.
 \item The correlations have very wide uncertainty---the prior is dominating in determining the posteriors as there isn't that much data to obtain accurate estimates of these parameters. Look at the cor parameters.
-
-Incidentally, the frequentist lmer model would fail entirely to estimate the correlation parameters, but it would *look* like everything is fine---if you don't know what properties a variance covariance matrix must have  in order to not be *degenerate*.
-
-```{r results="hide"}
-library(lme4)
-m_gglmer<-lmer(log(rawRT)~so + (1+so|subject)+(1+so|item),gge1crit)
-```
-
-```{r}
-summary(m_gglmer)
-```
-
-The effect of RC type looks excitingly significant and researchers will stop looking as soon as they find an absolute t-value larger than 2.
-
-But the by-item variance matrix is degenerate because the matrix is not invertible. We see this by computing its determinant, and find that it's 0, which entails that it is not invertible:
-
-```{r}
-itemvar<-matrix(c(0.001719,0.04146*0.04431,
-                  0.04146*0.04431,0.001963),ncol=2)
-det(itemvar) ## effectively 0 => non-invertible
-```
-
-This is one reason why one shouldn't blindly fit maximal models with lmer; see the discussion in @barr2013 and @BatesEtAlParsimonious. In Bayesian models, the argument can be made that one can always fit a maximal model. This is so because the priors will always regularize the posterior (push it closer to zero) if there isn't enough data, and the posterior will have high uncertainty, which alerts the researcher that not enough information is present in the data for estimating the parameter in question. 
 \end{itemize}
 
 ### Examine by subject random effects visually
@@ -512,8 +489,13 @@ First, extract the posterior samples of the parameters that we will need to comp
 ```{r}
 library(bayesplot)
 postgg<-posterior_samples(m_gg)
+## extract variances:
 alpha<-postgg$b_Intercept
 beta<-postgg$b_so
+cor<-posterior_samples(m_gg,"^cor")
+sd<-posterior_samples(m_gg,"^sd")
+sigma<-posterior_samples(m_gg,"sigma")
+
 ## item random effects won't be used below
 item_re<-posterior_samples(m_gg,"^r_item")
 subj_re<-posterior_samples(m_gg,"^r_subj")
@@ -522,26 +504,32 @@ subj_re<-posterior_samples(m_gg,"^r_subj")
 
 #### By subject intercept adjustments
 
-Figure \ref{fig:ggsubjint} shows to-do
+Figure \ref{fig:ggsubjint} shows the adjustments to the intercept ($\alpha$) by subject. This is on the log scale. Here, we are looking at the parameters $u_0$ in the model, which are assumed to be generated from $Normal(0,\sigma_{u0})$. The between subject variability is being captured here by this subject level parameter.
 
 ```{r fig.cap="\\label{fig:ggsubjint}Variability in subject intercept adjustments in the Grodner and Gibson data."}
 subjint<-subj_re[,1:42]
 colnames(subjint)<-c(paste("u0,",1:42,sep=""))
-mns <- colMeans(subjint)
-subjint<-subjint[,order(mns)]
+intmns <- colMeans(subjint)
+subjint<-subjint[,order(intmns)]
 mcmc_areas(subjint)
 ```
 
 #### By subject slope adjustments
 
-Figure \ref{fig:ggsubjslope} shows to-do
+Figure \ref{fig:ggsubjslope} shows the by-subject adjustments to the OR processing cost effect ($\beta$). Here, the assumption is that these adjustments are $u_1 \sim Normal(0,\sigma_{u_1})$.
 
 ```{r fig.cap="\\label{fig:ggsubjslope}Variability in subject slope adjustments in the Grodner and Gibson data."}
 subjslope<-subj_re[,(1:42)+42]
 colnames(subjslope)<-c(paste("u1,",1:42,sep=""))
-mns <- colMeans(subjslope)
-subjslope<-subjslope[,order(mns)]
+slopemns <- colMeans(subjslope)
+subjslope<-subjslope[,order(slopemns)]
 mcmc_areas(subjslope)
+```
+
+The correlation between $u_0$ and $u_1$ is represented by the correlation parameter $\rho_u$.
+
+```{r fig.cap="\\label{fig:ggpostcorr}Posterior distributions of subject varying intercept and slope correlation parameter in the Grodner and Gibson data."}
+stanplot(m_gg,type="hist",pars="cor_subject__Intercept__so")
 ```
 
 
@@ -590,9 +578,107 @@ As Spiegelhalter et al write in the Norm Chronicles: ``The average is an abstrac
 
 ### To make discovery claims, calibrate the true and false discovery rate
 
-Suppose that, based on these data and this model, we want to claim that there is a mean OR processing cost in English (this is what I just showed you above; it makes no sense as a question, but we will suspend disbelief for now). In order to make a discovery claim, we need to understand the **true discovery rate** of this effect. In the frequentist world, this would be the statistical power, the probability of your detecting an effect if there is in fact one.
+Suppose that, based on these data and this model, we want to claim that there is a mean OR processing cost in English. In order to make a discovery claim, we need to understand the **true discovery rate** of this effect. In the frequentist world, this would be the *statistical power*, the probability of detecting an effect if there is in fact one.
 
-to-do
+First, we write a function to generate fake data:
+
+```{r}
+library(MASS)
+gen_fake_lnorm <- function(nitem=16,nsubj=42,
+alpha=NULL,beta=NULL,
+                        Sigma_u=NULL,Sigma_w=NULL,sigma_e=NULL){
+  ## prepare data frame for two condition in a latin square design:
+g1<-data.frame(item=1:nitem,
+                 cond=rep(c("objgap","subjgap"),nitem/2))
+g2<-data.frame(item=1:nitem,
+                 cond=rep(c("objgap","subjgap"),nitem/2))
+
+## assemble data frame in long format:
+gp1<-g1[rep(seq_len(nrow(g1)),
+              nsubj/2),]
+gp2<-g2[rep(seq_len(nrow(g2)),
+              nsubj/2),]
+
+fakedat<-rbind(gp1,gp2)
+
+## add subjects:
+fakedat$subj<-rep(1:nsubj,each=nitem)
+fakedat<-fakedat[,c(3,1,2)]  
+fakedat$so<-ifelse(fakedat$cond=="objgap",1,-1)
+
+## subject random effects:
+  u<-mvrnorm(n=length(unique(fakedat$subj)),
+             mu=c(0,0),Sigma=Sigma_u)
+  ## item random effects
+  w<-mvrnorm(n=length(unique(fakedat$item)),
+             mu=c(0,0),Sigma=Sigma_w)
+  ## generate data row by row:
+  N<-dim(fakedat)[1]
+  rt<-rep(NA,N)
+  for(i in 1:N){
+    rt[i] <- rlnorm(1,alpha +
+                      u[fakedat[i,]$subj,1] +
+                      w[fakedat[i,]$item,1] +
+                      (beta+u[fakedat[i,]$subj,2]+
+                         w[fakedat[i,]$item,2])*fakedat$so[i],
+                   sigma_e)}
+  fakedat$rt<-rt
+  fakedat$subj<-factor(fakedat$subj); fakedat$item<-factor(fakedat$item)
+  fakedat}
+```
+
+Next, we extract the parameter means from the Bayesian model, and assemble the variance covariance matrices for the subject and item random effects.
+ 
+```{r} 
+sds<-colMeans(sd)
+cors<-colMeans(cor)
+sig<-mean(sigma$sigma)
+Sigma_u<-diag(sds[3:4]^2)
+Sigma_u[1,2]<-Sigma_u[2,1]<-cors[2]*sds[3]*sds[4]
+Sigma_w<-diag(sds[1:2]^2)
+Sigma_w[1,2]<-Sigma_w[2,1]<-cors[1]*sds[1]*sds[2]
+```
+
+Then, we run 50 simulations, computing the 95% credible interval of the OR processing cost effect.
+Because this is a very time-consuming calculation, we are going to use previously computed values.
+
+```{r eval=FALSE}
+nsim<-50
+betaquants<-matrix(rep(NA,nsim*2),ncol =2)
+betameans<-matrix(rep(NA,nsim),ncol =2)
+
+for(i in 1:nsim){
+gg_fake<-gen_fake_lnorm(alpha=mean(alpha),
+                        beta=mean(beta),
+               Sigma_u=Sigma_u,Sigma_w=Sigma_w,
+               sigma_e=sig)
+
+m_gg_fake<-brm(rt~so + (1+so|subj) + (1+so|item),gg_fake,family=lognormal(),
+    prior=priors,
+    control = list(adapt_delta = 0.99,max_treedepth=15))
+betapost<-posterior_samples(m_gg_fake)$b_so
+betaquants[i,]<-quantile(betapost,prob=c(0.025,0.975))
+betameans[i]<-mean(betapost)
+}
+save(betameans,
+     file="data/truediscoverymeans.Rda")
+save(betaquants,
+     file="data/truediscoveryquants.Rda")
+```
+
+This simulation gives us an estimate of the proportion of times we would be able to detect an effect with 16 items and 42 subjects, assuming that the Grodner and Gibson data reflect a real difference between the two relative clause types. 
+
+Assuming that we are willing to declare an effect just in case 0 is not included in the 95% credible interval of the effect, 
+the above simulation shows that we would detect the effect in only half of the repeated experiments. 
+
+\begin{verbatim}
+> length(which(betaquants[,1]>0))/50
+[1] 0.5
+\end{verbatim}
+
+Thus, the true discovery rate is quite low. One would want the true discovery rate to be at least 80%. 
+
+We can also investigate the false discovery rate---the proportion of times we would declare that we found an effect, when there is none. In frequentist statistics, this is called Type I error. The only change needed in the above simulation is to set $\beta$ to 0, to reflect the assumption that there is no effect.
 
 ### Posterior predictive checks
 
@@ -604,71 +690,11 @@ pp_check(m_gg, nsamples = 100)+
         legend.text=element_text(size=16))
 ```
 
-### The prior predictive distribution
+## Example 2: Question-response accuracies (Logistic regression)
 
-to-do
+The @grodner data also has question response accuracies: 1 if the response to a question following the sentence was correct, 0 otherwise. We show only the relevant columns below:
+
 ```{r}
-ggpriorpred<-"
-data {
-  int<lower = 1> N;
-  vector<lower = -1, upper = 1>[N] so;
-  int<lower = 1> J;
-  int<lower = 1> K;
-  int<lower = 1, upper = J> subj[N]; 
-  int<lower = 1, upper = K> item[N]; 
-}
-parameters {
-  real<lower = 0> sigma;
-  real<lower = 0> sigma_u0;
-  real<lower = 0> sigma_u1;
-  real<lower = 0> sigma_w0;
-  real<lower = 0> sigma_w1;
-  real alpha;
-  real beta;
-  vector[J] u0;
-  vector[J] u1;
-  vector[K] w0;
-  vector[K] w1;
-}
-model {
-  alpha ~ normal(6, 2);
-  beta  ~ normal(0, .01);
-  sigma ~ normal(0, 1);
-  sigma_u0 ~ normal(0, .5);
-  sigma_u1 ~ normal(0, .5);
-  sigma_w0 ~ normal(0, .5);
-  sigma_w1 ~ normal(0, .5);
-  u0 ~ normal(0, sigma_u0);
-  u1 ~ normal(0, sigma_u1);
-  w0 ~ normal(0, sigma_w0);
-  w1 ~ normal(0, sigma_w1);
-}
-generated quantities {
-  vector[N] y_sim;
-  for(i in 1:N){ 
-     y_sim[i] = lognormal_rng(alpha + u0[subj[i]] + w0[item[i]] +  (beta + u1[subj[i]] + w1[item[i]]) * so[i],sigma);
-  }
-}
-"
-```
-
-```{r cache=TRUE,results="hide"}
-dat<-list(N=42*16,J=42,K=16,subj=fakedat$subj,
-          item=fakedat$item,
-          so=fakedat$so)
-
-## fit model:
-mggpriorpred<-stan(model_code=ggpriorpred,
-                  data=dat,
-                  chains = 4, 
-                iter = 2000,control = list(adapt_delta=0.99,max_treedepth = 15))
-
-
-## extract and plot one of the data-sets:
-y_sim<-extract(mggpriorpred,pars="y_sim")
-op <- par(mfrow=c(2,5),pty="s")
-for(i in 1:10){
-hist(as.vector(y_sim$y_sim[i,]),main=paste("sample",i,sep=" "),xlab="y_sim",freq=FALSE)
-}  
+head(gge1crit[,c(1,2,3,8,11)])
 ```
 
