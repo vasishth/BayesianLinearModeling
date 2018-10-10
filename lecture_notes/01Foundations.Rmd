@@ -8,8 +8,8 @@ This document and all associated material are provided under a [Creative Commons
   - [OSF](https://osf.io/jhu47/)
   - [github](https://github.com/vasishth/BayesianLinearModeling)
 
-**Acknowledgments**: The linear modeling and hierarchical linear modeling chapters follows to some extent the presentation developed by Bruno Nicenboim in 
-https://github.com/vasishth/FGME_Stan_2017. The course notes have benefitted a lot from the lectures and writings of [Michael Betancourt](https://betanalpha.github.io/).
+**Acknowledgments**: A few things have been borrowed from the linear modeling and hierarchical linear modeling chapters in 
+https://github.com/vasishth/FGME_Stan_2017. The course notes have benefitted a lot from the lectures and writings of [Michael Betancourt](https://betanalpha.github.io/). Other sources are acknowledged within the lecture notes.
 
 ### Intended audience and prerequisites
 
@@ -19,6 +19,13 @@ The public course home page is [here](http://www.ling.uni-potsdam.de/~vasishth/s
 The university-internal moodle forum for homework submissions and internal communications is [here](https://moodle2.uni-potsdam.de/course/view.php?id=17526).
 
 I assume here that the graduate student taking this course has elementary numeracy acquired usually at the class 10 level.  Calculus and linear algebra are mentioned in the notes but I do not require the student to know these topics. Whenever calculus and linear algebra come up, I will explain what the equations or formulas mean just in time. No **active** ability in these areas is needed. What I do assume is basic (class 10) algebra, basic set theory,  and arithmetic ability.
+
+For example:
+
+\begin{itemize}
+\item $x^a * x^ b = x^{a+b}$
+\item $\exp(\log(x))=x$
+\end{itemize}
 
 Some very basic knowledge of R is assumed, but not much. If students don't know R, I will provide a quick introduction, although google is one's friend here. 
 
@@ -32,28 +39,31 @@ Before starting, please install
     - [Instructions for Mac or Linux](https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Mac-or-Linux) 
   - The R package [brms](https://github.com/paul-buerkner/brms)
   
-Please talk to me if you have difficulties installing anything, although be warned that my knowledge of Windows is limited to knowing that it exists in the world out there somewhere.  
+Please talk to the instructor if you have difficulties installing anything, although be warned that my knowledge of Windows is limited to knowing that it exists.  
 
 ### Motivation for course design
 
-Because statistics inherently depends on mathematics, it is very important to get a reasonably formal introduction to the topic. The usual, informal manner in which statistics is taught has been a failure in all Cognitive Science disciplines.  We see this in the way statistics is routinely abused in psycholinguistics, psychology, and linguistics, among other areas. Some examples from psycholinguistics are mentioned alongside each point: 
+Because statistics inherently depends on mathematics, it is very important to get a reasonably formal introduction to the topic. Although an informal introduction can be good as a first course, stopping there is generally harmful and has been a failure in all Cognitive Science disciplines.  
 
-  - deciding that an effect is ``reliable'' if $p<0.05$ in a severely underpowered study; for examples, see @JaegerEtAl2017, @VasishthMertzenJaegerGelman2018.
-  - inconrrectly arguing that the null is true when $p>0.05$, or arguing that the null is false when is a bit over $p>0.05$, but the researcher wants desperately that p be less than 0.05;  for discussion, see @VasishthNicenboimStatMeth, @NicenboimVasishth2016.
-  - flexible data analysis to get the result desired: analyze many dependent measures and choose whichever result you like, ignoring the rest; see @MalsburgAngele2016.
+We see this in the way statistics is routinely abused in psycholinguistics, psychology, and linguistics, among other areas. Some examples from psycholinguistics are mentioned alongside each point: 
+
+  - decide that an effect is ``reliable'' if $p<0.05$ in a severely underpowered study; for examples, see @JaegerEtAl2017, @VasishthMertzenJaegerGelman2018.
+  - inconrrectly argue that the null is true when $p>0.05$, or arguing that the null is false when is a bit over $p>0.05$, but the researcher wants desperately that p be less than 0.05;  for discussion, see @VasishthNicenboimStatMeth, @NicenboimVasishth2016.
+  - flexibly analyze data to get the result desired: analyze many dependent measures and choose whichever result you like, ignoring the rest; see @MalsburgAngele2016.
   - ignore model assumptions, focusing only on p-value; examples are discussed in @VasishthetalPLoSOne2013, @NicenboimRoettgeretal, @VasishthEtAl2017Modelling. 
   - flexibly change the research question, theory, or predictions after seeing the data; for discussion of the distinction between confirmatory vs exploratory testing, see @NicenboimEtAlCogSci2018.
- - remove data selectively, or avoid removing it, depending on the desired result (examples will be provided).
+ - argue for a significant interaction after showing a significant effect in one pair of conditions and no significant effect in another pair [@nieuwenhuis2011erroneous].
  
-Most people do not make these mistakes intentionally; I have made them too. For examples of mistakes listed above from my own work, see @vasishthlewisLanguage05, @vasishth:phdbook. 
+Most people do not make these mistakes intentionally (that would be scientific misconduct!). The problem is ignorance about what statistics can and cannot give you.
+
+In the past, I have made these mistakes too. For examples of mistakes listed above from my own work, see @vasishthlewisLanguage05, @vasishth:phdbook. 
 
 In a modest attempt to at least partly remedy this situation, the present course attempts to provide some understanding of the basic formal ideas behind statistical modeling. 
 
-If you find mistakes, please open an issue [here](https://github.com/vasishth/BayesianLinearModeling). Alternatively, if you know to, you can alternatively [fork and make a pull request](https://help.github.com/articles/fork-a-repo/).
+If you find typos or outright errors in this document, please open an issue [here](https://github.com/vasishth/BayesianLinearModeling). Alternatively, if you know how to, you can alternatively [fork and make a pull request](https://help.github.com/articles/fork-a-repo/).
 
-The central idea we will explore in this course is: how to 
-use Bayes' theorem for data analysis. In order to understand the methodology, some passive understanding of the following topics needs to be in place:
-
+The central idea we will explore in this course is: given data, how to 
+use Bayes' theorem to quantify uncertainty about a scientific question of interest. In order to understand the methodology, some passive understanding of the following topics needs to be in place:
 
   - Basic probability theory:
     - sum and product rule
@@ -61,23 +71,23 @@ use Bayes' theorem for data analysis. In order to understand the methodology, so
     - independence of events
     - Bayes' rule
   - The theory of random variables
-    - probability density/mass function $f(x)$ vs cumulative distribution function $F(x)$
+    - the distinction betweeen the probability density/mass function $f(x)$ vs cumulative distribution function $F(x)$
     - inverse CDF, $F^{-1}(x)$
     - expectation and variance of (transformations of) random variables
   - Probability density/mass functions
-    - Ten common pdfs
+    - Ten common distributions
     - Jointly distributed random variables
     - Sums of random variables
     - Marginal and conditional pdfs
-    - Covariance and correlation
+    - Covariance, correlation, and the variance-covariance matrix
     - Multivariate normal distributions
   - Maximum likelihood estimation
-    - How to find MLEs analytically
-    - How to find MLEs using R
-    - Visualization of log likelihood
+    - How to find MLEs analytically (some calculus needed here)
+    - How to find MLEs using the R function optim
+    - Visualization of the log likelihood
 
 Without a clear understanding of these concepts, generalized confusion is an inevitable outcome. 
-This is why it is so important to expend some energy in understanding these concepts. One common question I get is: *why do I need to know this*? The answer is: Please trust me that you do.
+That is why it is so important to expend some energy in understanding these concepts. 
 
 But before we dive in, it may help to step back and get an overview of  where we are going in this course.
 
@@ -87,9 +97,9 @@ The way we will conduct data analysis is as follows.
 
   - Given data, specify a *likelihood function*.
   - Specify *prior distributions* for model parameters.
-  - Evaluate whether model makes sense, using fake-data simulation, *prior predictive* and *posterior predictive* checks, and (if you want to claim a discovery) calibrating true and false discovery rates.
-  - Using software, derive *marginal posterior distributions* for parameters given likelihood function and prior density. I.e., simulate parameters to get *samples from posterior distributions* of parameters using some *Markov Chain Monte Carlo (MCMC) sampling algorithm*.
-  - Check that the model converged using *model convergence* diagnostics,
+  - Evaluate whether model makes sense, using *fake-data simulation*, *prior predictive* and *posterior predictive* checks, and (if you want to claim a discovery) calibrating *true* and *false discovery rates*.
+  - Using software, derive *marginal posterior distributions* for parameters given likelihood function and prior density. I.e., simulate parameters to get *samples from posterior distributions* of parameters using some *Markov Chain Monte Carlo (MCMC) sampling algorithm*, specifically, the Hamiltonian Monte Carlo method.
+  - Check that the model converged using *model convergence* diagnostics.
   - Summarize *posterior distributions* of parameter samples and make your scientific decision.
 
 The above is what you will learn in this course; all the terms introduced above will be explained in these notes and in class. We begin with basic probability theory.
@@ -573,6 +583,30 @@ Why are we going through these basic results? As Betancourt puts it (see [here](
 ## Ten important distributions
 
 These distributions are generally used quite frequently in Bayesian data analyses, especially in psychology and linguistics applications. For the first few distributions, we show the pdf and cdf. The Binomial and Poisson are discrete distributions, the rest are continuous.
+
+
+You should install the following add-in into RStudio:
+
+```{r eval=FALSE}
+if ( !('devtools' %in% installed.packages()) ) install.packages("devtools")
+
+devtools::install_github("bearloga/tinydensR")
+```
+
+Then, run
+
+```{r eval=FALSE}
+library(tinydensR)
+univariate_discrete_addin()
+```
+
+or 
+
+```{r eval=FALSE}
+univariate_continuous_addin()
+```
+
+to visualize the distributions under different parameterizations. Note that RStudio may occasionally crash when this command is run. Just restart RStudio if this happens.
 
 ### Binomial
 
@@ -1058,7 +1092,6 @@ rt(n, df)
 
 ### Summary of distributions
 
-This presentation is adapted from https://github.com/wzchen/probability_cheatsheet.
 
 \small
 \begin{center}
@@ -1085,6 +1118,9 @@ This presentation is adapted from https://github.com/wzchen/probability_cheatshe
 \hline
 \end{tabular}
 \end{center}
+
+The above table is adapted from https://github.com/wzchen/probability_cheatsheet.
+
 \normalsize
 
 ## Jointly distributed random variables
@@ -1707,14 +1743,14 @@ and
 
 For simplicity consider the case where $N(\mu=0,\sigma^2=1)$.
 
-```{r,logliknormal,fig.cap="\\label{fig:maxlik}Maximum likelihood and log likelihood."}
+```{r logliknormal,fig.cap="\\label{fig:maxlik}Maximum likelihood and log likelihood."}
 op<-par(mfrow=c(1,2),pty="s")
-plot(function(x) dnorm(x,log=F), -3, 3,
-      main = "Normal density",#ylim=c(0,.4),
+plot(function(x) dnorm(x,log=FALSE), -3, 3,
+      main = "Normal density",
               ylab="density",xlab="X")
 abline(h=0.4)
-plot(function(x) dnorm(x,log=T), -3, 3,
-      main = "Normal density (log)",#ylim=c(0,.4),
+plot(function(x) dnorm(x,log=TRUE), -3, 3,
+      main = "Normal density (log)",
               ylab="density",xlab="X")
 abline(h=log(0.4))
 ```
@@ -1813,4 +1849,97 @@ Finally, we print out the estimated parameter values that maximize the likelihoo
 
 Knowledge of maximum likelihood estimation will be needed in the next chapter.
 
+## Exercises
 
+\begin{enumerate}
+\item 
+We plan to toss a fair coin three times. 
+\begin{itemize}
+\item What is the theoretical probability of obtaining
+\item 0 heads
+\item 1 heads
+\item 2 heads
+\item 3 heads
+\end{itemize}
+\item What is the theoretical probability of obtaining 
+\begin{itemize}
+\item 0 or 1 heads
+\item 0,1, or 2 heads
+\item 0-3 heads?
+\end{itemize}
+  \item This is a question using Bayes' rule. Suppose that 1 in 1000 people in a population are expected to get HIV. Suppose a test is administered on a suspected HIV case, where the test has a true positive rate (the proportion of positives that are actually HIV positive) of 95\%  and true negative rate (the proportion of negatives are actually HIV negative) 98\%. 
+Use Bayes theorem to find out the probability that a patient testing positive actually has HIV.  
+\item 
+Toss a coin 10 times and compute, using pbinom, the probability of getting the total numbers of heads you got, assuming that the coin is fair.
+
+Hint: given sample size $n$, your assumed probability of a heads $prob$, and the number of heads you got $x$, the pbinom function delivers $P(X \leq x)$, the probability of getting $x$ heads or less. In other words, pbinom is the **cumulative distribution function**.
+
+Here is how you can compute $P(X\leq x)$:
+
+\begin{verbatim}
+pbinom(x,size=n,p=prob)
+\end{verbatim}
+
+```{r echo=FALSE,eval=FALSE}
+nheads<-8
+pbinom(nheads,size=10,p=0.5)-pbinom((nheads-1),size=10,p=0.5)
+```
+
+Note that you have to compute $P(X=x)$!
+
+Based on what everyone finds, we can write down the number of cases we have of each possible outcome, along with the theoretical probability. 
+
+```{r echo=FALSE,eval=FALSE}
+nstud<-23
+store<-rep(NA,nstud)
+headcount<-rep(NA,nstud)
+for(i in 1:nstud){
+nheads<-rbinom(n=1,size=10,p=0.5)
+headcount[i]<-nheads
+store[i]<-pbinom(nheads,size=10,p=0.5)-
+          pbinom(nheads-1,size=10,p=0.5)
+}
+
+pbinom(5,size=10,p=0.5)-pbinom(4,size=10,p=0.5)
+
+
+table(headcount)/23
+```
+
+\item 
+Given 
+$X \sim f(\cdot)$, where $f(\cdot)$ is (a) $Unif(0,10)$, (b) 
+$N(\mu=100,\sigma^2=20)$, (c) 
+$Binom(p=.6,n=20)$. 
+Find the probability of $P(X<3), P(X>11), P(X=6)$ 
+for each distribution.
+
+Fill in the table below.
+
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrr}
+  \hline
+$f(\cdot)$ & Prob.\ & Answer  \\ 
+  \hline
+Unif(0,10) & $P(X<3)=$ &  \\ 
+   & $ P(X>11)=$ &    \\ 
+   & $P(X=6)=$  &  \\ 
+   
+ N(100,20) & $P(X<3)=$ &  \\ 
+   & $ P(X>11)=$  &    \\ 
+   & $P(X=6)=$  &  \\ 
+ Binom(p=.6,n=20) & $P(X<3)=$ &  \\ 
+   & $ P(X>11)=$  &    \\ 
+   & $P(X=6)=$  &  \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+```{r echo=FALSE,eval=FALSE}
+punif(11,min=0,max=10,lower.tail=F)
+
+punif(6,min=0,max=10)-punif(5,min=0,max=10)
+```
+\end{enumerate}  
