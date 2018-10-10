@@ -718,7 +718,7 @@ This book is currently the best textbook in existence, and assumes no calculus o
 
   - Lynch, S. M. (2007). Introduction to applied Bayesian statistics and estimation for social scientists. Springer Science & Business Media. This book assumes knowledge of calculus and linear algebra. It gives a classical, statistician's introduction to Bayes. I highly recommend this book to people who know some (undergraduate math level) calculus and linear algebra.
 
-\begin{qbox}{\subsection{Exercises}}
+## Exercises
 
 \begin{enumerate}
   \item 
@@ -732,38 +732,30 @@ $\theta^2$. This means that there is some constant c (the constant of proportion
 \end{enumerate}
 
 \item Exercise on the Binomial distribution:
-Toss a coin 10 times and compute, using \texttt{pbinom}, the probability of getting the total numbers of heads you got, assuming that the coin is fair.
+Toss a coin 10 times and compute, using pbinom, the probability of getting the total numbers of heads you got, assuming that the coin is fair.
 
-Hint: given sample size $n$, your assumed probability of a heads $prob$, and the number of heads you got $x$, the \texttt{pbinom} function delivers $P(X \leq x)$, the probability of getting $x$ heads or less. In other words, pbinom is the \textbf{cumulative distribution function} (textbooks often call this simply \textbf{distribution function}).
+Hint: given sample size $n$, your assumed probability of a heads $prob$, and the number of heads you got $x$, the pbinom function delivers $P(X \leq x)$, the probability of getting $x$ heads or less. In other words, pbinom is the *cumulative distribution function*.
 
-Here is how you can compute $P(X\leq x)$:
-
-\begin{verbatim}
-pbinom(x,size=n,p=prob)
-\end{verbatim}
-
-```{r,include=FALSE}
-nheads<-8
-pbinom(nheads,size=10,p=0.5)-pbinom((nheads-1),size=10,p=0.5)
-```
-
-Note that you have to compute $P(X=x)$!
-
+Note that you have to compute $P(X=x)$.
 Based on what everyone finds, write down the number of cases we have of each possible outcome, along with the theoretical probability. 
 
-
-\item
-Given 
-$X \sim f(\cdot)$, where $f(\cdot)$ is (a) $Unif(0,10)$, (b) 
-$N(\mu=100,\sigma^2=20)$, (c) 
-$Binom(p=.6,n=20)$. 
-Find the probability of $P(X<3), P(X>11), P(X=6)$ 
-for each distribution.
+\begin{table}[!htbp]
+\begin{center}
+\begin{tabular}{rlllllllllll}
+  \hline
+Number of heads: & 0 & 1 & 2 & 3 & 4 & 5 &  6 & 7 & 8 & 9 & 10 \\ 
+  \hline
+Theoretical probability: &  &  &  &  &  &  &  &  &  & &  \\ 
+Count: &  &  &  &  &  &  &  &  &  &  \\ 
+   \hline
+\end{tabular}
+\end{center}
+\end{table}
 
 \item
 Plot the priors, likelihoods, and posterior distributions in the four Beta-Binomial cases discussed in the notes.
 
-```{r,binomexample1,echo=F,include=F}
+```{r binomexample1,echo=FALSE,include=FALSE}
 ###lik:
 plot(function(x) 
   dbeta(x,shape1=46,shape2=54),0,1,
@@ -784,9 +776,149 @@ plot(function(x)
 legend(0.1,6,legend=c("post","lik","prior"),
        lty=c(1,1,2),col=c("black","red","black"))
 ```
+\item The French mathematician Pierre-Simon Laplace (1749-1827) was the first person to show definitively that the proportion of female births in the French population was less then $0.5$, in the late 18th century, using a Bayesian analysis based on a uniform prior distribution). Suppose you were doing a similar analysis but you had more definite prior beliefs about the ratio of male to female births. In particular, if $\theta$ represents the proportion of female births in a given population, you are willing to place a Beta(100,100) prior distribution on $\theta$.
+  
+   Show that this means you are more than 95\% sure that $\theta$ is between $0.4$ and $0.6$, although you are ambivalent as to whether it is greater or less than $0.5$.
 
+ Now you observe that out of a random sample of $1,000$ births, $511$ are boys. What is your posterior probability that $\theta> 0.5$?''
+ 
+\item
+Consider normally distributed data with unknown mean but known variance.
+Before getting into the exercise, recall the idea of the *likelihood function*.
+
+Suppose $X_1,\dots,X_n$ is a random variable that comes from a normally distributed population with mean $\mu$ and standard deviation $\sigma$. 
+Suppose that the sample values $x_1,\dots,x_n$ are independent.
+
+Because these values are independent, 
+the joint probability of getting these values is just the product of the individual probabilities:
+
+\begin{equation}
+\begin{split}
+P(X_1=x_1,X_2=x_2,\dots,X_n=x_n) =& P(X_1=x_1)P(X_2=x_2)\dots P(X_n=x_n) \\
+=& f(X_1=x_1,X_2=x_2,\dots,X_n=x_n;\theta)  \\
+\end{split}
+\end{equation}
+
+The last line $f(X_1=x_1,X_2=x_2,\dots,X_n=x_n;\theta)$ means: ``the joint probability of the values $x_1,\dots,x_n$ given a specific value for the parameter(s) $\theta$.'' Here, $\theta$ is the vector $<\mu>$. If $\sigma$ were unknown, $\theta$ would be $<\mu,\sigma>$.
+
+For different values of $\theta$, we would get different values for the function $f(\cdot)$. In other words, we can talk about a function  $L(\theta)$ given the data, that delivers different values for each value of $\theta$. 
+This is the *likelihood function*.
+
+In other words:
+
+\begin{eqnarray}
+L(x\mid \theta) & = \prod N(x_i; \mu, \sigma^2)  \\
+                 & = (\frac{1}{\sigma \sqrt{2 \pi}})^{n} \exp (-\frac{1}{2\sigma^2} \sum (x_i - \mu)^2)\\ 
+\end{eqnarray}
+
+We assume that we already know $\sigma$. Given the likelihood function, we can ask:
+What is the value of $\mu$ that would maximize the probability of this data?
+
+Taking logs and differentiating with respect to $\mu$, we get:
+
+\begin{equation}
+\hat \mu = \frac{1}{n}\sum x_i = \bar{x}	
+\end{equation}
+
+
+Suppose that we have independent data as follows:
+
+```{r}
+x<-c(15.7,14.7,16.1,16.2,15.1)
+```
+
+We typically start by calculating the mean (among other things):
+
+Using this sample mean (and the given variance), we make a best guess as to the pdf that is assumed to have generated *each data point*:
+
+$X\sim N(\bar{x},\sigma)$
+
+For $n$ data points, we can characterize the sampling distribution of the sample means as:
+
+$\bar{X}\sim N(\bar{x},\sigma/\sqrt{n})$
+
+%More generally, the method of maximum likelihood consists of maximizing %the likelihood function with respect to $\theta$. The value of $\theta$ %that maximizes the likelihood function is the \textbf{MLE} (maximum %likelihood estimate) of $\theta$.
+
+So let us suppose we have independent and identically distributed data $x=\{x_1,\dots,x_n\}$, where $X_i \sim N(\mu,\sigma^2)$. Assume that $\sigma^2$ is known as above, but $\mu$ is unknown.  
+
+It follows that the pdf for random variable representing any one data point is $N(\bar{x},\sigma^2)$. 
+
+Now we make the big bayesian move. Let our prior be that the sampling distribution of $\mu$ is  $N(m,v)$. Note that this is the prior for the sampling distribution of the mean $\mu$. It represents what we believe to be true about $\mu$, including our degree of uncertainty about our belief. 
+
+Then, given Bayes' theorem
+
+$\hbox{Posterior} \propto \hbox{Prior} \times \hbox{Likelihood}$
+
+or
+
+$\hbox{Posterior} \propto \explain{N(m,v)}{prior} \times \explain{N(\bar{x},\sigma^2/n)}{likelihood}$
+
+it is straightforward to derive analytically (proof omitted, but see @Lynch2007) that the posterior will be $N(m*,v*)$, where
+
+\begin{equation}
+v*=\frac{1}{\frac{1}{v}+ \frac{n}{\sigma^2}} 
+\end{equation}
+
+\begin{equation}
+m*= v* \left( \frac{m}{v} + \frac{n\bar{x}}{\sigma^2} \right)
+\end{equation}
+
+Importantly, 
+we can rewrite m* as a weighted mean of the prior and the sample mean:
+
+\begin{equation}
+m* = \frac{w_1}{w_1+w_2} m + \frac{w_2}{w_1+w_2} \bar{x}
+\end{equation}
+
+where $w_1=v^{{-1}}$ and $w_2 = (\frac{\sigma^2}{n})^{-1}$ 
+
+Because of results like the one above, it is easier to talk about variance in terms of precision=1/variance. 
+
+**Example of how we can use the above analytical result**
+
+Let the data be: 15.7,14.7,16.1,16.2,15.1. Variance ($\sigma^2$) is known to be 0.6.
+Let the prior be  N(m=14,v=1).
+We will work out the posterior distribution using the formula.
+
+```{r}
+derive.post<-function(n,x.bar,sigma2,m,v){
+v.star<- 1/( (1/v) + n/sigma2 )
+m.star<-v.star*(m/v + (n*x.bar/sigma2))
+return(list(m.star,v.star))
+}
+
+data<-list(y=c(15.7,14.7,16.1,16.2,15.1))
+
+post<-derive.post(n=length(data$y),
+                   x.bar=mean(data$y),
+                   sigma2=0.6,m=14,v=1)
+```
+
+You can now play with the weighting of the prior and data.
+
+First, make the prior variance very low; this yields a shift of the posterior towards the prior, with low variance:
+
+```{r}
+post<-derive.post(n=length(data$y),x.bar=mean(data$y),
+                   sigma2=.6,m=14,v=0.0001)
+```
+
+Next, make the prior variance very high; this shifts the posterior towards the sample mean and variance:
+
+```{r eval=FALSE}
+post<-derive.post(n=length(data$y),
+                  x.bar=mean(data$y),
+                  sigma2=.6,m=14,v=100)
+mean(data$y)
+var(data$y)
+```
+
+This basically sums up a situation we will encounter in this course: we will use priors that express low certainty ("non-informative" priors), letting ``the data speak for themselves.'' But in cases where we do have prior information, we will use it! (This is impossible to do in frequentist settings) You will see how prior beliefs can be incorporated into your analysis.
+
+**Questions**:
+
+What role does sample size n play in the computation of the posterior? When sample size is increased in the above example, 
+will the posterior lean towards the prior or the likelihood?
+
+Visualize the prior, likelihood and posterior for v=0.001, v=100. Obtain the posterior distribution's parameters using the formula. 
 \end{enumerate}
-\end{qbox}
-
-
-
