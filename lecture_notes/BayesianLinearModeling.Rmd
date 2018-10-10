@@ -1,6 +1,6 @@
 ---
+title: "Bayesian Linear Modeling: An introduction using brms and rstan"
 subtitle: "Lecture notes for MSc Cognitive Science and MSc Linguistics, University of Potsdam, Germany"
-title: "Bayesian Linear Modeling: An  introduction using brms and rstan"
 author: "Shravan Vasishth"
 date: "`r Sys.Date()`"
 header-includes:
@@ -16,6 +16,12 @@ header-includes:
    - \newtheorem{definition}{Definition}
    - \newtheorem{proposition}{Proposition}
    - \newtheorem{theorem}{Theorem}
+   - \usepackage{mathtools}
+   - \makeatletter
+   - \newcommand{\explain}[2]{\underset{\mathclap{\overset{\uparrow}{#2}}}{#1}}
+   - \newcommand{\explainup}[2]{\overset{\mathclap{\underset{\downarrow}{#2}}}{#1}}
+   - \makeatother
+
 fontsize: 12pt
 linkcolor: red
 urlcolor: red
@@ -59,15 +65,12 @@ library(dplyr)
 ```{r child = '02IntroBayes.Rmd'}
 ```
 
+
 \newpage
 
 ```{r child = '03LinearModeling.Rmd'}
 ```
 
-\newpage
-
-```{r child = '04HierarchicalLinearModeling.Rmd'}
-```
 
 \newpage
 
