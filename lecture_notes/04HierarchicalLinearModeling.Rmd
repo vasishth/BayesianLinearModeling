@@ -240,6 +240,8 @@ where
 
 This is called the *varying intercepts and slopes* model with *no correlation* between the intercepts and slopes.
 
+### The maximal model \label{maximal}
+
 There is one detail still missing in the model: the adjustments to the intercept and slope are correlated for subjects, and also for items. In other words, we have a bivariate distribution for the subject and item random effects:
 
 \begin{equation}
@@ -292,7 +294,7 @@ where $\varepsilon_{kj} \sim Normal(0,\sigma)$ and
 \right)
 \end{equation}
 
-This is a varying intercepts and slopes model with fully specified  variance-covariance matrices for the subject and item random effects. It is sometimes called the **maximal model**.
+This is a varying intercepts and slopes model with fully specified  variance-covariance matrices for the subject and item random effects. It is sometimes called the **maximal model** [@barr2013].
 
 ### Implementing the model
 
@@ -533,7 +535,7 @@ stanplot(m_gg,type="hist",pars="cor_subject__Intercept__so")
 ```
 
 
-### Examine mean and individual differences on the raw ms scale
+### Examine mean and individual differences on the raw ms scale \label{rawscale}
 
 It is useful to see the effects on the raw ms scale. The log ms scale is difficult to interpret. 
 
@@ -549,7 +551,9 @@ round(quantile(meandiff,prob=c(0.025,0.975)),0)
 ```
 
 ```{r fig.cap="\\label{fig:ggmeandiff}Mean OR processing cost effect in the Grodner and Gibson data."}
-hist(meandiff,freq=FALSE,main="Mean OR vs SR processing cost",xlab=expression(exp(alpha + beta)- exp(alpha - beta)))
+hist(meandiff,freq=FALSE,
+     main="Mean OR vs SR processing cost",
+     xlab=expression(exp(alpha + beta)- exp(alpha - beta)))
 ```
 
 #### Individual effects of OR processing cost
@@ -574,7 +578,7 @@ mcmc_areas(subjdiff)
 
 This illustrates a point that @blastland2014norm make: ``The average is an abstraction. The reality is variation.'' Any theory of sentence processing would have to be able to reproduce the pattern of individual differences observed, with only a few participants showing an OR processing cost and the majority showing equivocal conclusions. The average effect doesn't represent the behavior of many individuals in this sample.
 
-### To make discovery claims, calibrate the true and false discovery rate
+### To make discovery claims, calibrate the true and false discovery rate \label{tdr}
 
 Suppose that, based on these data and this model, we want to claim that there is a mean OR processing cost in English. In order to make a discovery claim, we need to understand the **true discovery rate** of this effect. In the frequentist world, this would be the *statistical power*, the probability of detecting an effect if there is in fact one.
 
@@ -796,5 +800,76 @@ hist(probor-probsr,freq=FALSE)
 abline(v=0,lwd=2)
 ```
 
-\begin{qbox}{\subsection{Exercises}}
-\end{qbox}
+## Exercises
+
+1. Load the following two data-sets: gibsonwu2012data.txt, which is a data-set from @gibsonwu. This is self-paced reading data from Chinese relative clauses. The research question is whether Chinese is like English (does Chinese show an OR processing cost or not). The replication data, gibsonwu2012datarepeat.txt, is from @VasishthetalPLoSOne2013. This data uses the same items as in Gibson and Wu's study, but it has new subjects.
+
+To load the replication data, run the following code:
+
+```{r}
+## load first data-set:
+gw<-read.table("data/gibsonwu2012data.txt",
+                 header=TRUE)
+## code predictor:
+gw$so <- ifelse(
+  gw$type%in%c("subj-ext"),-1,1)
+## subset critical region
+gw1<-subset(gw,region=="headnoun")
+
+gw2<-read.table("data/gibsonwu2012datarepeat.txt",
+                  header=TRUE)
+```
+
+For each of the two data-sets, do the following:
+
+  - Does the experiment have a Latin square design? Are the data balanced (equal number of cases for subject and object relatives from each subject)? Why or why not?
+  - Plot the distribution of the reading times. Is it skewed or normally distributed? 
+  - First re-read \ref{maximal}. Write down in mathematical notation the maximal hierarchical linear model, with varying intercepts and slopes for subjects and items in order to investigate the effect of relative clause type on reading time. Assume a Log-Normal likelihood. 
+  - Fit the model using brms. Use Normal(0,10) as a  prior for the intercept, and Normal(0,1) priors for the other parameters. For correlations, use LKJ(2). 
+  - Plot the posterior distributions of all parameters.
+  - Carry out diagnostic checks (trace plots, etc.) to make sure that the model converged.
+  - Carry out a posterior predictive check. Does the model's predicted data approximately match the observed data?
+  - Plot individual subjects' effects. Do all subjects show consistent patterns?
+
+```{r echo=FALSE, eval=FALSE,results="hide"}
+priors <- c(set_prior("normal(0, 10)", class = "Intercept"),
+                      set_prior("normal(0, 1)", class = "b", 
+                                coef = "so"),
+                      set_prior("normal(0, 1)", class = "sd"),
+                      set_prior("normal(0, 1)", class = "sigma"),
+                      set_prior("lkj(2)", class = "cor"))
+
+m_gw<-brm(rt~so + (1+so|subj) + (1+so|item),headnoun,family=lognormal(),
+    prior=priors)
+summary(m_gw)
+```
+
+  - Now carry out the same steps as above for the replication of the Gibson and Wu study, published in . 
+
+
+Are the posterior distributions of the OR processing effect in the original Gibson and Wu data and the replication data similar in magnitude and in the width of the 95% credible interval?
+
+2. Re-read section \ref{tdr} first.
+Using the fake-data simulation method described in the notes, determine the *true discovery rates* and *false discovery rates* for the Gibson and Wu data and the replication data. For true discovery rate, assume a true OR processing effect of 0.04 on the log ms scale in both data-sets, and 30 subjects and 16 items (this computation will take some time, so do it overnight). The other parameters can be estimated from the respective data-set. False discovery rate refers to the proportion of times you would declare that an effect is present, in the case where there is no effect. Thus, the OR processing cost (the $\beta$ parameter) would have to be assumed to be 0. As a criterion for declaring a discovery, assume that the 95% credible interval excludes zero.
+
+3. The goal of this exercise is to become familiar with fitting models that have a more complex design than the simple two-condition experiments we have considered so far. Here we will fit a $2\times 2$ repeated measures factorial design from Experiment 1 of @HusainEtAl2014. This was also a self-paced reading study on relative clauses. The dependent variable was the reading time $rt$ of the relative clause verb, just like in the @grodner study on English. The factors were relative clause type, which we code with the predictor $RCType$ ($RCType=+1$ for object relatives and $RCType=-1$ for subject relatives) and distance between the head noun and the relative clause verb, which we code with the predictor $dist$ ($dist=+1$ for long distance and $dist=-1$ for short distance). Their interaction is coded with the predictor $int$. The $60$ subjects were speakers of Hindi, an Indo-Aryan language spoken primarily in India. The $24$ items were presented in a standard Latin square design. This resulted in a total of $1440$ data points. The first few lines from the data frame are shown below.
+
+```{r}
+husain<-read.table("data/HusainEtAlexpt1data.txt",header=TRUE)
+head(husain[,c(1,3,8,11,12,13)])
+```
+
+Our theoretical interest is in determining whether relative clause type and distance influence reading time, and whether there is an interaction between these two factors. We will use brms to determine the posterior probability distribution of the fixed effect $\beta _1$ for relative clause type, the fixed effect $\beta _2$ for distance, and their interaction $\beta _3$.
+
+Fit a varying intercepts, varying slopes model (maximal model) to this data-set. 
+The model you should fit is:
+
+```{r eval=FALSE}
+m_husain <- brm(rt~ RCType + dist + int + 
+                  (1+RCType + dist + int|subj)+
+                  (1+RCType + dist + int|item),
+                husain,family=lognormal())
+```
+
+  - First re-read \ref{rawscale}. Extract the posteriors of the effect of RCType, dist, and int, and then transform them to the raw ms scale. Display the posterior distributions on the ms scale.   
+  - Review the contrast coding mentioned above for the three predictors. What is the scientific interpretation of the posterior distributions computed above? Are object relatives easier or harder to process? What is the effect of distance on reading time? Is there any indication of an interaction between these two factors?  
