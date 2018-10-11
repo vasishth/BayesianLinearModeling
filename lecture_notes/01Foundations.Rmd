@@ -1417,7 +1417,7 @@ $f_{X\mid Y}(x\mid y)\, dx$ amounts to:
 \begin{split}
 f_{X\mid Y}(x\mid y)\, dx =& \frac{f(x,y)}{f_Y(y)} \frac{dxdy}{dy}\\
 		=& \frac{f(x,y)dxdy}{f_Y(y)dy} \\
-		=& \frac{P(x<X<d+dx,y<Y<y+dy)}{y<P<y+dy}
+		=& \frac{P(x<X<x+dx,y<Y<y+dy)}{y<P<y+dy}
 \end{split}	
 \end{equation}
 
@@ -1435,7 +1435,6 @@ The \textbf{covariance} of $X$ and $Y$ is
 
 Shortcut formula for covariance:
 
-
 \begin{equation}
 \mbox{Cov}(X,Y)=\mathbb{E}(XY)-(\mathbb{E} X)(\mathbb{E} Y).
 \end{equation}
@@ -1451,6 +1450,183 @@ The correlation is usually denoted by $\rho_{X,Y}$ or simply $\rho$ if the rando
 	\item The range of correlation is $-1\leq\rho_{X,Y}\leq1$.
 	\item Equality holds above ($\rho_{X,Y}=\pm1$) if and only if $Y$ is a linear function of $X$ with probability one.
 \end{enumerate}
+
+#### Variance-covariance matrices
+
+The variances in a multivariate distribution will be composed of
+
+  - variances for each random variable
+  - covariances between pairs of random variables, which includes some correlation $\rho$ between pairs of random variables
+
+E.g., for a bivariate distribution with random variables $u_0$ and $u_1$, this information is expressed in a so-called variance-covariance matrix.
+
+\begin{equation}
+\Sigma
+=
+\begin{pmatrix}
+\sigma _{u0}^2  & \rho \sigma _{u0}\sigma _{u1}\\
+\rho \sigma _{u0}\sigma _{u1}    & \sigma _{u1}^2\\
+\end{pmatrix}
+\end{equation}
+
+the covariance $Cov(X,Y)$ between two variables $X$ and $Y$ is
+defined as the product of their correlation $\rho$ and their standard
+deviations $\sigma_X$ and $\sigma_Y$, such that, $Cov(X,Y) = \rho
+\sigma_X \sigma_Y$.
+
+\begin{equation}
+\boldsymbol{\Sigma_u} = 
+{\begin{pmatrix} 
+\sigma_{u_0}^2 & \rho_u \sigma_{u_0} \sigma_{u_1} \\ 
+\rho_u \sigma_{u_0} \sigma_{u_1} & \sigma_{u_1}^2
+\end{pmatrix}}
+\end{equation}
+
+The covariance matrix can be decomposed into a matrix of standard deviations and a correlation matrix. The correlation matrix looks like this:
+
+\begin{equation}
+\rho_u = 
+{\begin{pmatrix} 
+1 & \rho  \\ 
+\rho  & 1
+\end{pmatrix}}
+\end{equation}
+
+
+This means that we can decompose the covariance matrix into three parts:
+
+\begin{equation}
+\begin{aligned}
+\boldsymbol{\Sigma} 
+&=
+{\begin{pmatrix} 
+\sigma_{u_0} & 0 \\ 
+0  & \sigma_{u_1}
+\end{pmatrix}}
+{\begin{pmatrix} 
+1 & \rho_u  \\ 
+\rho_u  & 1
+\end{pmatrix}}
+{\begin{pmatrix} 
+\sigma_{u_0} & 0 \\ 
+0  & \sigma_{u_1}
+\end{pmatrix}}
+\end{aligned}
+\end{equation}
+
+#### The Cholesky decomposition
+
+Given a correlation matrix $\boldsymbol{\rho_u}$, we can obtain a square root of the matrix. If we multiply the lower triangular matrix $\mathbf{L_u}$ with its transpose, we get the correlation matrix:
+
+$\mathbf{L_u}
+\mathbf{L_u}^T=\boldsymbol{\rho_u}$. 
+
+The matrix $\mathbf{L_u}$ is called the
+Cholesky factor of $\mathbf{\rho_u}$:
+
+\begin{equation}
+\mathbf{L_u}  =
+{\begin{pmatrix} 
+l_{11} & 0 \\ 
+l_{21}  & l_{22}
+\end{pmatrix}}
+\end{equation}
+
+-----
+
+As an example, let's assume a correlation of $0.8$.
+
+```{r}
+rho <- 0.8
+#Correlation matrix
+rho_u <- matrix(c(1,rho,rho,1),ncol=2)
+
+# Cholesky factor: (we transpose it so that it looks the same as in Stan)
+L_u <- t(chol(rho_u))
+# We verify that we recover rho_u, %*% indicates matrix multiplication (=! element-wise multiplication) 
+L_u %*% t(L_u)
+```
+---------
+
+What is the Cholesky factor useful for?
+We can use the Cholesky factor to generate
+correlated random variables in the following way.
+
+Step 1.  We generate uncorrelated values that will be associated with random variable $u$ from a $Normal(0,1)$. In our case we have $u_0$ and $u_1$, so
+    we will generate:
+
+$$z_{u_0} \sim Normal(0,1)$$
+$$z_{u_1} \sim Normal(0,1)$$
+
+------
+
+For example, assuming only 10 data points:
+
+```{r}
+N_subj <- 10
+z_u0 <- rnorm(N_subj,0,1)
+z_u1 <- rnorm(N_subj,0,1)
+```
+------
+
+Step 2. By multiplying the Cholesky factor by our $z$'s we generate a matrix of correlated variables (with standard deviation 1).
+
+A very informal explanation of why this works is that we are making the
+variable that corresponds to the slope to be a function of a scaled version of
+the intercept.
+
+----------
+
+For example:
+```{r}
+# matrix z_u
+z_u <- matrix(c(z_u0,z_u1),ncol=N_subj,byrow=T)
+
+L_u %*% z_u
+```
+------------
+
+
+Step 3. The last step is to scale the previous matrix to the desired standard deviation. We define the diagonalized matrix $diag\_matrix(\tau_u)$ as before:
+
+$$
+{\begin{pmatrix} 
+\tau_{u_0} & 0 \\ 
+0  & \tau_{u_1}
+\end{pmatrix}}
+$$
+
+---------
+
+For example:
+
+```{r}
+tau_u0 <- .2
+tau_u1 <- .01
+(diag_matrix_tau <- matrix(c(tau_u0,0,0,tau_u1),ncol=2))
+```
+------------
+
+We pre-multiply it by the correlated variables with SD of 1 from before:
+
+
+------------
+
+For example:
+
+```{r}
+u <- diag_matrix_tau %*% L_u %*% z_u
+
+# We should find that the rows are correlated ~.8
+cor(u[1,],u[2,])
+
+# We should be able to recover the tau's as well:
+sd(u[1,])
+sd(u[2,])
+```
+--------------
+
+This will be useful when fitting hierarchical linear models: we will define a prior on the Cholesky factor of the correlation matrix, and then assemble the variance-covariance matrix as shown above.
 
 ### Multivariate normal distributions
 
@@ -1836,7 +2012,8 @@ nllh.normal(theta=c(500,50),data)
 Basically, you could sit here forever, playing with combinations of values for mean and sd to find the combination that gives the optimal log likelihood. R has an optimization function that does this for you. We have to specify some sensible starting values:
 
 ```{r}
-opt.vals.default<-optim(theta<-c(700,40),nllh.normal,
+opt.vals.default<-optim(theta<-c(700,40),
+                        nllh.normal,
       data=data,
       hessian=TRUE)
 ```
@@ -1844,7 +2021,7 @@ opt.vals.default<-optim(theta<-c(700,40),nllh.normal,
 Finally, we print out the estimated parameter values that maximize the likelihood:
 
 ```{r}
-(estimates.default<-opt.vals.default$par)
+opt.vals.default$par
 ```
 
 Knowledge of maximum likelihood estimation will be needed in the next chapter.
@@ -1856,23 +2033,22 @@ Knowledge of maximum likelihood estimation will be needed in the next chapter.
 We plan to toss a fair coin three times. 
 \begin{itemize}
 \item What is the theoretical probability of obtaining
+\begin{itemize}
 \item 0 heads
 \item 1 heads
 \item 2 heads
 \item 3 heads
 \end{itemize}
-\item What is the theoretical probability of obtaining 
-\begin{itemize}
+\item What is the theoretical probability of obtaining \begin{itemize}
 \item 0 or 1 heads
 \item 0,1, or 2 heads
 \item 0-3 heads?
 \end{itemize}
-  \item This is a question using Bayes' rule. Suppose that 1 in 1000 people in a population are expected to get HIV. Suppose a test is administered on a suspected HIV case, where the test has a true positive rate (the proportion of positives that are actually HIV positive) of 95\%  and true negative rate (the proportion of negatives are actually HIV negative) 98\%. 
-Use Bayes theorem to find out the probability that a patient testing positive actually has HIV.  
+\end{itemize}
 \item 
-Toss a coin 10 times and compute, using pbinom, the probability of getting the total numbers of heads you got, assuming that the coin is fair.
+Toss a coin 10 times and count the number of heads, Compute, using pbinom, the theoretical probability of getting the total numbers of heads you got, assuming that the coin is fair.
 
-Hint: given sample size $n$, your assumed probability of a heads $prob$, and the number of heads you got $x$, the pbinom function delivers $P(X \leq x)$, the probability of getting $x$ heads or less. In other words, pbinom is the **cumulative distribution function**.
+Hint: given sample size $n$, your assumed probability of a heads $prob$, and the number of heads you got $x$, the pbinom function delivers $P(X \leq x)$, the probability of getting $x$ heads or less. In other words, pbinom is the cumulative distribution function.
 
 Here is how you can compute $P(X\leq x)$:
 
@@ -1887,7 +2063,21 @@ pbinom(nheads,size=10,p=0.5)-pbinom((nheads-1),size=10,p=0.5)
 
 Note that you have to compute $P(X=x)$!
 
-Based on what everyone finds, we can write down the number of cases we have of each possible outcome, along with the theoretical probability. 
+Based on what everyone finds, we can write down the number of cases we have of each possible outcome (0 heads, 1 heads, \dots, 10 heads), along with the theoretical probability. 
+
+\begin{table}[!htbp]
+\begin{center}
+\begin{tabular}{rlllllllllll}
+  \hline
+Number of heads: & 0 & 1 & 2 & 3 & 4 & 5 &  6 & 7 & 8 & 9 & 10 \\ 
+  \hline
+Theoretical probability: &  &  &  &  &  &  &  &  &  & &  \\ 
+Count: &  &  &  &  &  &  &  &  &  &  \\ 
+   \hline
+\end{tabular}
+\end{center}
+\end{table}
+
 
 ```{r echo=FALSE,eval=FALSE}
 nstud<-23
@@ -1906,6 +2096,8 @@ pbinom(5,size=10,p=0.5)-pbinom(4,size=10,p=0.5)
 table(headcount)/23
 ```
 
+  \item Suppose that 1 in 1000 people in a population are expected to get HIV. Suppose a test is administered on a suspected HIV case, where the test has a true positive rate (the proportion of positives that are actually HIV positive) of 95\%  and true negative rate (the proportion of negatives are actually HIV negative) 98\%. 
+Use Bayes theorem to find out the probability that a patient testing positive actually has HIV.  
 \item 
 Given 
 $X \sim f(\cdot)$, where $f(\cdot)$ is (a) $Unif(0,10)$, (b) 
@@ -1942,4 +2134,7 @@ punif(11,min=0,max=10,lower.tail=F)
 
 punif(6,min=0,max=10)-punif(5,min=0,max=10)
 ```
+
+\item Generate two correlated random variables using the Cholesky factorization. to-do
+Visualize the bivariate distrn.
 \end{enumerate}  
