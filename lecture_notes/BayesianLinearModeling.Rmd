@@ -46,7 +46,7 @@ fig_height: 4
 \fontsize{12}{18}\selectfont
 
 ```{r setup, include=FALSE,cache=F}
-knitr::opts_chunk$set(tidy = T,cache=T, autodep=TRUE,tidy.opts=list(width.cutoff=59))
+knitr::opts_chunk$set(tidy = FALSE,cache=TRUE, autodep=TRUE,tidy.opts=list(width.cutoff=59))
 options(htmltools.dir.version = FALSE)
 options(scipen=999, digits=3)
 library(ggplot2)
@@ -71,6 +71,10 @@ library(dplyr)
 ```{r child = '03LinearModeling.Rmd'}
 ```
 
+\newpage
+
+```{r child = '04HierarchicalLinearModeling.Rmd'}
+```
 
 \newpage
 
