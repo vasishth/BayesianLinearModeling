@@ -1514,9 +1514,9 @@ This means that we can decompose the covariance matrix into three parts:
 \end{aligned}
 \end{equation}
 
-#### The Cholesky decomposition
+#### The Cholesky decomposition \label{chol}
 
-Given a correlation matrix $\boldsymbol{\rho_u}$, we can obtain a square root of the matrix. If we multiply the lower triangular matrix $\mathbf{L_u}$ with its transpose, we get the correlation matrix:
+Assume that we have an $n\times n$ correlation matrix $\boldsymbol{\rho_u}$. We can obtain a square root of this matrix, which is called the lower triangular matrix $\mathbf{L_u}$. If we multiply $\mathbf{L_u}$ with its transpose, we get the correlation matrix:
 
 $\mathbf{L_u}
 \mathbf{L_u}^T=\boldsymbol{\rho_u}$. 
@@ -1532,8 +1532,6 @@ l_{21}  & l_{22}
 \end{pmatrix}}
 \end{equation}
 
------
-
 As an example, let's assume a correlation of $0.8$.
 
 ```{r}
@@ -1541,24 +1539,21 @@ rho <- 0.8
 #Correlation matrix
 rho_u <- matrix(c(1,rho,rho,1),ncol=2)
 
-# Cholesky factor: (we transpose it so that it looks the same as in Stan)
+# Cholesky factor: 
 L_u <- t(chol(rho_u))
-# We verify that we recover rho_u, %*% indicates matrix multiplication (=! element-wise multiplication) 
+# Verify that we recover rho_u, %*% 
+# indicates matrix multiplication (=! element-wise multiplication) 
 L_u %*% t(L_u)
 ```
----------
 
 What is the Cholesky factor useful for?
 We can use the Cholesky factor to generate
 correlated random variables in the following way.
 
-Step 1.  We generate uncorrelated values that will be associated with random variable $u$ from a $Normal(0,1)$. In our case we have $u_0$ and $u_1$, so
-    we will generate:
+**Step 1**.  We generate uncorrelated values that will be associated with random variable $u$ from a $Normal(0,1)$. In our case we have $u_0$ and $u_1$, so we will generate:
 
 $$z_{u_0} \sim Normal(0,1)$$
 $$z_{u_1} \sim Normal(0,1)$$
-
-------
 
 For example, assuming only 10 data points:
 
@@ -1567,15 +1562,12 @@ N_subj <- 10
 z_u0 <- rnorm(N_subj,0,1)
 z_u1 <- rnorm(N_subj,0,1)
 ```
-------
 
-Step 2. By multiplying the Cholesky factor by our $z$'s we generate a matrix of correlated variables (with standard deviation 1).
+**Step 2**. By multiplying the Cholesky factor by our $z$'s we generate a matrix of correlated variables (with standard deviation 1).
 
 A very informal explanation of why this works is that we are making the
 variable that corresponds to the slope to be a function of a scaled version of
 the intercept.
-
-----------
 
 For example:
 ```{r}
@@ -1584,10 +1576,8 @@ z_u <- matrix(c(z_u0,z_u1),ncol=N_subj,byrow=T)
 
 L_u %*% z_u
 ```
-------------
 
-
-Step 3. The last step is to scale the previous matrix to the desired standard deviation. We define the diagonalized matrix $diag\_matrix(\tau_u)$ as before:
+**Step 3**. The last step is to scale the previous matrix to the desired standard deviation. We define the diagonalized matrix as before:
 
 $$
 {\begin{pmatrix} 
@@ -1596,8 +1586,6 @@ $$
 \end{pmatrix}}
 $$
 
----------
-
 For example:
 
 ```{r}
@@ -1605,28 +1593,24 @@ tau_u0 <- .2
 tau_u1 <- .01
 (diag_matrix_tau <- matrix(c(tau_u0,0,0,tau_u1),ncol=2))
 ```
-------------
 
 We pre-multiply it by the correlated variables with SD of 1 from before:
 
-
-------------
 
 For example:
 
 ```{r}
 u <- diag_matrix_tau %*% L_u %*% z_u
 
-# We should find that the rows are correlated ~.8
+# We should find that the rows have approx. correlation 0.8
 cor(u[1,],u[2,])
 
 # We should be able to recover the tau's as well:
 sd(u[1,])
 sd(u[2,])
 ```
---------------
 
-This will be useful when fitting hierarchical linear models: we will define a prior on the Cholesky factor of the correlation matrix, and then assemble the variance-covariance matrix as shown above.
+This process of generating correlated random variables will be useful when we start fitting hierarchical linear models: we will define a prior on the Cholesky factor of the correlation matrix, and then assemble the variance-covariance matrix as shown above, and then generate correlated random variables (varying intercepts and slopes).
 
 ### Multivariate normal distributions
 
@@ -2135,6 +2119,29 @@ punif(11,min=0,max=10,lower.tail=F)
 punif(6,min=0,max=10)-punif(5,min=0,max=10)
 ```
 
-\item Generate two correlated random variables using the Cholesky factorization. to-do
-Visualize the bivariate distrn.
+\item 
+
+Let $X$ and $Y$ be discrete random variables with values of $p_{X,Y}(x,y)$ as shown below:
+
+\begin{table}[!htbp]
+\begin{center}
+\begin{tabular}{c|ccc}
+$p_{X,Y}$ & x=0 & x=1 & x=2\\
+\hline
+y = 0 & 0.04 & 0.11 & 0.19\\
+y = 1 & 0.12 & 0.19 & 0.19\\
+y = 2 & 0.07 & 0.09 & 0\\
+\end{tabular}
+\end{center}
+\caption{The joint PMF for $X$ and $Y$.}\label{q5table}
+\end{table}
+
+\begin{enumerate}
+\item Find the conditional distribution of X given each of the possible values of Y.
+\item 
+Find the marginal distribution of X. Then calculate $E[X]$.
+\end{enumerate}
+
+
+\item Re-read \ref{chol} first. Generate two correlated random variables of length 100 using the Cholesky factorization. Let the correlation be $-0.7$. Display the correlation in a plot.
 \end{enumerate}  
