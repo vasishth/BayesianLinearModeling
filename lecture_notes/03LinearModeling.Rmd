@@ -224,7 +224,9 @@ m1priorpred<-stan(model_code=priorpred,
 
 ## extract and plot one of the data-sets:
 y_sim<-extract(m1priorpred,pars="y_sim")
-hist(y_sim$y_sim[,1],main="Prior predictive distribution",xlab="y_sim",freq=FALSE)
+hist(y_sim$y_sim[,1],
+     main="Prior predictive distribution",
+     xlab="y_sim",freq=FALSE)
 ```
 
 Having satisfied outselves that the priors mostly make sense, we now fit the model to fake data. The goal here is to ensure that the model recovers the true underlying parameters.
@@ -290,9 +292,11 @@ Figure \ref{fig:m1rstanpost} shows that the true parameters that we defined when
 
 ```{r fig.cap="\\label{fig:m1rstanpost}Posteriors from fake data, model m1. Vertical lines show the true values of the parameters."}
 op<-par(mfrow=c(1,2),pty="s")
-hist(posteriors$mu,main=expression(paste("posterior for ",mu)),freq=FALSE,xlab="")
+hist(posteriors$mu,
+     main=expression(paste("posterior for ",mu)),freq=FALSE,xlab="")
 abline(v=400)
-hist(posteriors$sigma,main=expression(paste("posterior for ",sigma)),freq=FALSE,xlab="")
+hist(posteriors$sigma,
+     main=expression(paste("posterior for ",sigma)),freq=FALSE,xlab="")
 abline(v=125)
 ```
 
@@ -400,7 +404,7 @@ The trace plots in Figure \ref{fig:m1traceplot} show how well the four chains ar
 stanplot(m1brms,type="trace")
 ```
 
-An alternative way to plot is shown in Figure \ref.
+An alternative way to plot is shown in Figure \ref{fig:m1plot}.
 
 ```{r message=FALSE,fig.cap="\\label{fig:m1plot}Posterior distributions and trace plots in model m1."}
 plot(m1brms)
@@ -689,15 +693,16 @@ This also means that you can create a log-normal distribution by exponentiating 
 
 
 
-```{r lognormal, fig.height=2,fig.width=3.5, fig.show='hold', message=F, warning=F,fig.cap="\\label{fig:logndemo}The log-normal distribution."}
+```{r lognormal, fig.height=2,fig.width=3.5, fig.show='hold', message=FALSE, warning=FALSE,fig.cap="\\label{fig:logndemo}The log-normal distribution."}
 mu <- 6
 sigma <- 0.5
 N <- 100000
-# We generate N random samples from a log-normal distribution.
+# Generate N random samples from a log-normal distribution
 sl <- rlnorm(N, mu, sigma)
 lognormal_plot <- ggplot(data.frame(samples=sl), aes(sl)) + geom_histogram() + 
       ggtitle("Log-normal distribution\n") + ylim(0,25000) + xlim(0,2000)
-# We generate N random samples from a normal distribution, and then we exponentiate them
+# Generate N random samples from a normal distribution, 
+# and then exponentiate them
 sn <- exp(rnorm(N, mu, sigma))
 normalplot <- ggplot(data.frame(samples=sn), aes(sn)) + geom_histogram() + 
       ggtitle("Exponentiated samples of\na normal distribution") + ylim(0,25000) + xlim(0,2000)
@@ -745,8 +750,10 @@ complex than if we were dealing with a linear model that assumes  a normal likel
 ms_diff <- function(Intercept){
   exp(Intercept + .1) - exp(Intercept)
 }
-df <- tibble::data_frame(Intercept=seq(.1,15,.01), ms= ms_diff(Intercept))
-ggplot(df, aes(x=Intercept,y=ms)) + geom_point() + scale_y_continuous("Difference in milliseconds")
+df <- tibble::data_frame(Intercept=seq(.1,15,.01), 
+                         ms= ms_diff(Intercept))
+ggplot(df, aes(x=Intercept,y=ms)) + geom_point() +
+  scale_y_continuous("Difference in milliseconds")
 ```
 
 ### What kind of information are the priors encoding?
@@ -887,35 +894,237 @@ This is the general workflow that we recommend for a Bayesian model.
 
 \newpage
 
+## Exercises
 
-\begin{qbox}{\subsection{Exercises}}
-\begin{enumerate}
-\item For the  model  in Section \ref{sec:first}.
-  \begin{enumerate}
-    \item Recall that when we use the Beta distribution as a prior for the $\theta$ parameter in a Binomial, the two parameters of the Beta indicate previous outcomes and not only the most likely value of $\theta$. For example, $Beta(2,2)$ and $Beta(50,50)$ both indicate that $.5$ is the most likely value of $\theta$, but $Beta(50,50)$ indicates that we are more certain about it than $Beta(2,2)$. 
-    Assume that you are quite certain that the average accuracy in the task is 80\% for individuals with aphasia. How would you change the priors for the model in \ref{sec:first}? Fit the model several times, assuming the same average accuracy as prior information, but varying the amount of uncertainty? When do the results change? \label{ex:firstpriors}
-    \item Change the data to \verb|qresp_data <- list(c = 460, N = 1000)|, and repeat \ref{ex:firstpriors} with the same priors.
-    \item Simulate data assuming that the true $\theta$ is exactly $.5$ and (i) \verb|N = 100|, (ii) \verb|N = 1000| and run the \verb|firstmodel.stan|. (Tip: use the function \verb|rbinom| to simulate data.) Is the true value of $\theta$ inside 95\% credible interval? \label{ex:first-fake}
- \end{enumerate}
- \item For the  model  in Section \ref{sec:small}
-  \begin{enumerate}
-  \item Change the priors of $\mu$ and $\sigma$ in \verb|noreading_1.stan| to a Cauchy and a truncated Cauchy distributions. A Cauchy distribution is basically a bell shaped distribution with very fat tails.\footnote{You can read about this distribution in \url{https://en.wikipedia.org/wiki/Cauchy_distribution}.} What are reasonable values for the location and scale? What's the difference between having a Cauchy or a normal distribution as priors?
-  \end{enumerate}
-\end{enumerate}
-Continues in the next page.
-\end{qbox}
+1. Load the data-set beauty.txt. This data-set shows beauty ratings and the teaching evaluation score of professors in a US university. The data are from @GelmanHill2007.
 
-\begin{qbox}{}
-\begin{enumerate}[3.]
-\item For the  models  in Section \ref{sec:moreinter}.
-  \begin{enumerate}
-  \item Edit the \verb|generated quantities| block in \verb|noreading_log.stan| to estimate the slowdown in milliseconds (mean and 90\% credible interval) for the last time the participant  pressed the space bar in the experiment. In addition, predict the slowdown if the experiment would have had 500 observations.\label{ex:diff-eff}
-  \item Optional but very recommended: Simulate data that assumes a value of $\alpha$ of 400 and $\sigma$ of 125 and a practice effect of (i) 0.00001  and (ii) 0.1 (both in log-scale). Fit these data with \verb|noreading_log.stan|. Is the true value of the effect in the 95\% credible interval in both cases? 
-  \item Add word length as a covariate in \verb|noreading_log.stan|, summarize the posterior. How does the length of the words affect RTs?
-   \end{enumerate}
-\end{enumerate}
-\end{qbox}
+```{r}
+beauty<-read.table("data/beauty.txt",header=TRUE)
+head(beauty)
+```
 
+A beauty level of 0 means average beauty. Using a Bayesian linear model, carry out a full analysis to evaluate the question: does the physical attractiveness (beauty level) of the professor lead to a better teaching evaluation? 
+- Plot the data and look at the distributions of the data.
+- Define a model in Stan to answer the question.
+- Do a fake-data simulation to check whether the model recovers the parameters.
+- Once satisfied with the model, fit the model and display the posteriors.
+- Carry out a posterior predictive check to determine whether the model makes reasonable predictions.
+- What would you conclude about the effect of beauty on evaluations?
+
+2. The second most watched talk in the history of TED talks is by Amy Cuddy, some 32 million views. Watch the talk first: to-do
+
+Also read the original paper: .
+
+The claim is that raising your arms for two minutes will increase your testosterone, improving your performance in, e.g., job interviews. We are going to evaluate this claim based on Cuddy's data. Incidentally, the first author of the Cuddy paper has disavowed the paper: . 
+
+```{r}
+## cleaned data
+datc<-read.csv("data/ccy-clean-data.csv",
+               header=TRUE)
+
+## sanity check: one subject, one row
+dim(datc)
+length(unique(datc$id))
+
+#drop ineligible and something else as in stata code:
+datc<-subset(datc,inelig!="Ineligible (drop)" & anyoutv1!="Selected")
+```
+
+Then carry out the following exploration of the data.
+Examine male and female testosterone levels:
+
+```{r}
+## subset males and females
+males<-subset(datc,female=="Male")
+females<-subset(datc,female=="Female")
+
+## initial testosterone:
+summary(males$testm1)
+summary(females$testm1)
+
+## after treatment:
+summary(males$testm2)
+summary(females$testm2)
+```
+
+Calculate mean post-treatment testosterone by gender, and ignoring gender:
+
+```{r}
+round(with(datc,tapply(testm2,IND=list(female,hptreat),mean)))
+round(with(datc,tapply(testm2,IND=list(hptreat),mean)))
+```
+
+By how much did testosterone increase after treatment? Means by gender:
+
+```{r}
+## difference scores:
+round(with(datc,tapply(testm2-testm1,IND=list(female,hptreat),mean)))
+```
+
+Means ignoring gender: Figure \ref{fig:cuddyplot} is the rough and ready version of fig 3 of the paper.
+The effects are a bit smaller in this data-set than the published result, probably because of the statistician's cleaning up of the data.
+
+```{r fig.cap="\\label{fig:cuddyplot}Recreation of Figure 3 in the Cuddy power posing study."}
+means<-round(with(datc,tapply(testm2-testm1,IND=hptreat,mean)))
+sds<-with(datc,tapply(testm2-testm1,IND=hptreat,sd)))
+n<-length(datc$testm2
+ses<-sds/sqrt(n)
+
+barplot(means,ylim=c(-15,15))
+arrows(x0=.75,x1=.75,y0=means[1]-1.96*ses[1],y1=means[1]+1.96*ses[1],angle=90,code=3)
+arrows(x0=1.9,x1=1.9,y0=means[2]-1.96*ses[2],y1=means[2]+1.96*ses[2],angle=90,code=3)
+```
+
+One could do a two-sample t-test as shown below. Note the high variability in the change in testosterone in low and high pose subjects. There were many cases where testosterone went down post high-power pose. 
+
+```{r}
+## calculate difference
+diff<-datc$testm2-datc$testm1
+## make data frame with differences as DV:
+treatment<-datc$hptreat
+diff_df<-data.frame(subj=1:length(treatment),
+                    diff=diff,treatment=treatment)
+
+## subset low and high pose subjects' data:
+lowdiff<-subset(diff_df,treatment=="Low")
+highdiff<-subset(diff_df,treatment=="High")
+```
+
+```{r fig.cap="\\label{fig:testchange}Change in testosterone in low and high power pose conditions."}
+## graphical summary of distributions:
+op<-par(mfrow=c(2,2),pty="s")
+boxplot(lowdiff$diff,main="Low",ylim=c(-50,50),
+        ylab="change in testosterone")
+boxplot(highdiff$diff,main="High",ylim=c(-50,50),
+        ylab="change in testosterone")
+barplot(lowdiff$diff,main="Low",ylim=c(-50,50),
+        ylab="change in testosterone")
+barplot(highdiff$diff,main="High",ylim=c(-50,50),
+        ylab="change in testosterone")
+```
+
+Two-sample t-test:
+
+```{r}
+## t-test, two sample:
+t.test(highdiff$diff,lowdiff$diff)
+```
+
+There is actually no evidence of power posing. 
+Now, refit the model using various predictors: 
+- the initial testosterone value
+- the initial and final cortisone (?) levels 
+- the gender of the subject. 
+
+The question we ask here is, is post-treatment
+testosterone higher for subjects exposed to high vs low power, controlling for these variables?
+
+First, center all predictors:
+
+```{r}
+## center all predictors
+datc$ctestm1<-scale(datc$testm1,scale=FALSE)
+datc$chptreat<-ifelse(datc$hptreat=="High",1,-1)
+datc$cortm1<-scale(datc$cortm1,scale=FALSE)
+datc$cortm2<-scale(datc$cortm2,scale=FALSE)
+datc$female<-ifelse(datc$female=="Female",1,-1)
+```
+
+Fit the Bayesian version of model m0 below, using brms. 
+
+```{r}
+## This is the result that Fosse, Cuddy's statistician, found:
+summary(m0<-lm(testm2~ctestm1+chptreat+cortm1+
+                 cortm2+female,datc))
+summary(m0a<-lm(testm2~ctestm1+cortm1+cortm2+
+                  female,datc))
+## effect on testosterone of power posing:
+anova(m0,m0a)
+```
+
+Now, look at how gender affects the conclusions:
+
+```{r}
+## with interaction with gender, the effect disappears:
+summary(m1<-lm(testm2~ctestm1+chptreat+cortm1+cortm2+female+chptreat:female,datc))
+summary(m1a<-lm(testm2~ctestm1        +cortm1+cortm2+female+chptreat:female,datc))
+anova(m1,m1a)
+```
+
+Fit the above model m2 using brms.
+
+We could also have as dependent measure the **change** in testosterone in low vs high power subjects. This corresponds to the Fig 3 plot in the paper.
+
+```{r}
+datc$change<-datc$testm2-datc$testm1
+
+summary(m2<-lm(change~1,datc))
+summary(m2a<-lm(change~chptreat,datc))
+anova(m2,m2a)
+```
+
+```{r}
+## taking gender into account
+summary(m3<-lm(change~female,datc))
+summary(m3a<-lm(change~chptreat+female,datc))
+anova(m3,m3a) ## no effect
+```
+
+Fit m3a in brms.
+
+```{r}
+## taking interaction between treatment and gender into account
+summary(m4<-lm(change~female,datc))
+summary(m4a<-lm(change~chptreat*female,datc))
+anova(m4,m4a) ## no effect
+```
+
+Fit model 4a using brms.
+
+What can we conclude from this data?  Does power posing change testosterone levels?
+
+
+# Stan analysis
+
+For now, I just fit the change model, with gender as predictor (including interaction with treatment).
+The priors probably need some more thought.
+
+```{r}
+dat<-list(change=datc$change,
+          female=datc$female,
+          treatment=datc$chptreat,
+          N=length(datc$change))
+
+library(rstan)
+library(parallel)
+rstan_options(auto_write=TRUE)
+options(mc.cores=parallel::detectCores())
+
+## cauchy priors on beta params:
+#output <- stanc("linearmodel.stan")
+## normal priors N(0,20) on beta params:
+output <- stanc("linearmodel_normalpriors.stan")
+
+fit <- stan(file='linearmodel_normalpriors.stan', data=dat,
+            iter=2000, chains=4, seed=4938483,
+            control = list(adapt_delta = 0.8))
+
+paramnames<-c("alpha","beta_female","beta_treatment","beta_interaction","sigma")
+```
+
+```{r}
+print(fit,pars=paramnames)
+fit_matrix<-as.matrix(fit)
+(prob<-mean(fit_matrix[,3]>0))
+```
+
+```{r}
+params<-extract(fit,pars=paramnames)
+
+stan_plot(fit,pars=paramnames)
+
+stan_hist(fit,pars=paramnames)
+```
 
 
 \newpage
@@ -932,5 +1141,3 @@ Continues in the next page.
 
 <!-- https://cran.r-project.org/web/packages/bayesplot/vignettes/PPC.html -->
 
-\begin{qbox}{\subsection{Exercises}}
-\end{qbox}
