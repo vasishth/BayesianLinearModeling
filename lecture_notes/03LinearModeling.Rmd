@@ -911,9 +911,9 @@ A beauty level of 0 means average beauty. Using a Bayesian linear model, carry o
 - Carry out a posterior predictive check to determine whether the model makes reasonable predictions.
 - What would you conclude about the effect of beauty on evaluations?
 
-2. The second most watched talk in the history of TED talks is by Amy Cuddy, some 32 million views. Watch the talk first: to-do
+2. The second or third most watched talk in the history of TED talks is by Amy Cuddy, some 49 million views. Watch the talk first: to-do
 
-Also read the original paper: .
+Also read the original paper: to-do.
 
 The claim is that raising your arms for two minutes will increase your testosterone, improving your performance in, e.g., job interviews. We are going to evaluate this claim based on Cuddy's data. Incidentally, the first author of the Cuddy paper has disavowed the paper: . 
 
@@ -966,8 +966,8 @@ The effects are a bit smaller in this data-set than the published result, probab
 
 ```{r fig.cap="\\label{fig:cuddyplot}Recreation of Figure 3 in the Cuddy power posing study."}
 means<-round(with(datc,tapply(testm2-testm1,IND=hptreat,mean)))
-sds<-with(datc,tapply(testm2-testm1,IND=hptreat,sd)))
-n<-length(datc$testm2
+sds<-with(datc,tapply(testm2-testm1,IND=hptreat,sd))
+n<-length(datc$testm2)
 ses<-sds/sqrt(n)
 
 barplot(means,ylim=c(-15,15))
@@ -975,9 +975,8 @@ arrows(x0=.75,x1=.75,y0=means[1]-1.96*ses[1],y1=means[1]+1.96*ses[1],angle=90,co
 arrows(x0=1.9,x1=1.9,y0=means[2]-1.96*ses[2],y1=means[2]+1.96*ses[2],angle=90,code=3)
 ```
 
-One could do a two-sample t-test as shown below. Note the high variability in the change in testosterone in low and high pose subjects. There were many cases where testosterone went down post high-power pose. 
 
-```{r}
+```{r eval=FALSE,echo=FALSE}
 ## calculate difference
 diff<-datc$testm2-datc$testm1
 ## make data frame with differences as DV:
@@ -1003,18 +1002,20 @@ barplot(highdiff$diff,main="High",ylim=c(-50,50),
         ylab="change in testosterone")
 ```
 
-Two-sample t-test:
+A typical approach would be to do a 
+two-sample t-test:
 
-```{r}
+```{r eval=FALSE,echo=FALSE}
 ## t-test, two sample:
 t.test(highdiff$diff,lowdiff$diff)
 ```
 
-There is actually no evidence of power posing. 
+There seems to be no evidence for power posing. 
 Now, refit the model using various predictors: 
-- the initial testosterone value
-- the initial and final cortisone (?) levels 
-- the gender of the subject. 
+
+  - the initial testosterone value
+  - the initial and final cortisone (?) levels 
+  - the gender of the subject. 
 
 The question we ask here is, is post-treatment
 testosterone higher for subjects exposed to high vs low power, controlling for these variables?
@@ -1034,62 +1035,47 @@ Fit the Bayesian version of model m0 below, using brms.
 
 ```{r}
 ## This is the result that Fosse, Cuddy's statistician, found:
-summary(m0<-lm(testm2~ctestm1+chptreat+cortm1+
-                 cortm2+female,datc))
-summary(m0a<-lm(testm2~ctestm1+cortm1+cortm2+
-                  female,datc))
-## effect on testosterone of power posing:
-anova(m0,m0a)
+m0<-lm(testm2~ctestm1+chptreat+cortm1+
+                 cortm2+female,datc)
 ```
 
 Now, look at how gender affects the conclusions:
 
 ```{r}
 ## with interaction with gender, the effect disappears:
-summary(m1<-lm(testm2~ctestm1+chptreat+cortm1+cortm2+female+chptreat:female,datc))
-summary(m1a<-lm(testm2~ctestm1        +cortm1+cortm2+female+chptreat:female,datc))
-anova(m1,m1a)
+m1<-lm(testm2~ctestm1+chptreat+cortm1+cortm2+female+chptreat:female,datc)
 ```
 
-Fit the above model m2 using brms.
+Fit the above model m1 using brms.
 
 We could also have as dependent measure the **change** in testosterone in low vs high power subjects. This corresponds to the Fig 3 plot in the paper.
 
 ```{r}
 datc$change<-datc$testm2-datc$testm1
-
-summary(m2<-lm(change~1,datc))
-summary(m2a<-lm(change~chptreat,datc))
-anova(m2,m2a)
+m2a<-lm(change~chptreat,datc)
 ```
+
+Fit the above model in brms. Then take gender into account and check if gender has an effect:
 
 ```{r}
 ## taking gender into account
-summary(m3<-lm(change~female,datc))
-summary(m3a<-lm(change~chptreat+female,datc))
-anova(m3,m3a) ## no effect
+m3a<-lm(change~chptreat+female,datc)
 ```
 
 Fit m3a in brms.
 
+Next, take the interaction between treatment and gender into account. 
+
 ```{r}
 ## taking interaction between treatment and gender into account
-summary(m4<-lm(change~female,datc))
-summary(m4a<-lm(change~chptreat*female,datc))
-anova(m4,m4a) ## no effect
+m4a<-lm(change~chptreat*female,datc)
 ```
 
 Fit model 4a using brms.
 
 What can we conclude from this data?  Does power posing change testosterone levels?
 
-
-# Stan analysis
-
-For now, I just fit the change model, with gender as predictor (including interaction with treatment).
-The priors probably need some more thought.
-
-```{r}
+```{r eval=FALSE,echo=FALSE}
 dat<-list(change=datc$change,
           female=datc$female,
           treatment=datc$chptreat,
@@ -1097,35 +1083,29 @@ dat<-list(change=datc$change,
 
 library(rstan)
 library(parallel)
-rstan_options(auto_write=TRUE)
+rstan_options(auto_write=TRUE,results="hide")
 options(mc.cores=parallel::detectCores())
 
 ## cauchy priors on beta params:
 #output <- stanc("linearmodel.stan")
 ## normal priors N(0,20) on beta params:
-output <- stanc("linearmodel_normalpriors.stan")
+output <- stanc("StanModels/linearmodel_normalpriors.stan")
 
-fit <- stan(file='linearmodel_normalpriors.stan', data=dat,
+fit <- stan(file='StanModels/linearmodel_normalpriors.stan', data=dat,
             iter=2000, chains=4, seed=4938483,
             control = list(adapt_delta = 0.8))
 
 paramnames<-c("alpha","beta_female","beta_treatment","beta_interaction","sigma")
-```
-
-```{r}
 print(fit,pars=paramnames)
 fit_matrix<-as.matrix(fit)
-(prob<-mean(fit_matrix[,3]>0))
-```
+prob<-mean(fit_matrix[,3]>0)
 
-```{r}
 params<-extract(fit,pars=paramnames)
 
 stan_plot(fit,pars=paramnames)
 
 stan_hist(fit,pars=paramnames)
 ```
-
 
 \newpage
 
