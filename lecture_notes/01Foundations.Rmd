@@ -2034,12 +2034,6 @@ Toss a coin 10 times and count the number of heads, Compute, using pbinom, the t
 
 Hint: given sample size $n$, your assumed probability of a heads $prob$, and the number of heads you got $x$, the pbinom function delivers $P(X \leq x)$, the probability of getting $x$ heads or less. In other words, pbinom is the cumulative distribution function.
 
-Here is how you can compute $P(X\leq x)$:
-
-\begin{verbatim}
-pbinom(x,size=n,p=prob)
-\end{verbatim}
-
 ```{r echo=FALSE,eval=FALSE}
 nheads<-8
 pbinom(nheads,size=10,p=0.5)-pbinom((nheads-1),size=10,p=0.5)
@@ -2047,7 +2041,7 @@ pbinom(nheads,size=10,p=0.5)-pbinom((nheads-1),size=10,p=0.5)
 
 Note that you have to compute $P(X=x)$!
 
-Based on what everyone finds, we can write down the number of cases we have of each possible outcome (0 heads, 1 heads, \dots, 10 heads), along with the theoretical probability. 
+Based on what everyone in the class finds, we can write down the number of cases we have of each possible outcome (0 heads, 1 heads, \dots, 10 heads), along with the theoretical probability. 
 
 \begin{table}[!htbp]
 \begin{center}
@@ -2081,11 +2075,11 @@ table(headcount)/23
 ```
 
   \item Suppose that 1 in 1000 people in a population are expected to get HIV. Suppose a test is administered on a suspected HIV case, where the test has a true positive rate (the proportion of positives that are actually HIV positive) of 95\%  and true negative rate (the proportion of negatives are actually HIV negative) 98\%. 
-Use Bayes theorem to find out the probability that a patient testing positive actually has HIV.  
+Use Bayes' theorem to find out the probability that a patient testing positive actually has HIV.  
 \item 
 Given 
 $X \sim f(\cdot)$, where $f(\cdot)$ is (a) $Unif(0,10)$, (b) 
-$N(\mu=100,\sigma^2=20)$, (c) 
+$N(\mu=10,\sigma^2=20)$, (c) 
 $Binom(p=.6,n=20)$. 
 Find the probability of $P(X<3), P(X>11), P(X=6)$ 
 for each distribution.
@@ -2119,6 +2113,9 @@ punif(11,min=0,max=10,lower.tail=F)
 punif(6,min=0,max=10)-punif(5,min=0,max=10)
 ```
 
+\item A random variable X comes from a LogNormal distribution with mean 6 log milliseconds and standard deviation 0.1 log ms. Plot this distribution. What is the mean on the ms scale? 
+\item A random variable X comes from a Gamma distribution with mean 100 and standard deviation 10. Find the shape and rate parameters of the Gamma distribution.
+
 \item 
 
 Let $X$ and $Y$ be discrete random variables with values of $p_{X,Y}(x,y)$ as shown below:
@@ -2144,4 +2141,6 @@ Find the marginal distribution of X. Then calculate $E[X]$.
 
 
 \item Re-read \ref{chol} first. Generate two correlated random variables of length 100 using the Cholesky factorization. Let the correlation be $-0.7$. Display the correlation in a plot.
+
+\item Generate 1000 data points from a Gamma distribution with mean 100 and sd 10. Then, use the data and the optim function to get parameter estimates of the Gamma distribution. Does the output of the optim function match the theoretical values?
 \end{enumerate}  
